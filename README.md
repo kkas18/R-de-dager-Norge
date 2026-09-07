@@ -36,7 +36,10 @@ telefonen, og kan tas sikkerhetskopi av som JSON-fil.
 **Kontakter** er personene dine som en telefonliste: sortert på navn, gruppert
 på forbokstav, med søk på navn og nummer. Hentes fra telefonens kontaktliste
 eller legges inn manuelt. Trykk et navn for å sette bursdag, ringe, sende
-melding eller legge dagen i telefonkalenderen. Kontakter uten bursdag ligger i
+melding eller legge dagen i telefonkalenderen. Knappen «Sett bursdager» går
+gjennom alle uten dato på rad, med «Lagre og neste» og «Hopp over». Langt trykk
+på et navn, eller «Velg» over listen, gir avkrysning der du kan slette eller
+eksportere flere samtidig. Kontakter uten bursdag ligger i
 listen til du setter datoen, og holdes utenfor kalender, nedtelling og varsler.
 
 **Beregn** har to verktøy: antall virkedager mellom to datoer, og forslag til

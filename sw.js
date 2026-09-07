@@ -2,7 +2,7 @@
    HTML hentes fra nett først, slik at appen oppdaterer seg selv
    så snart du pusher nye filer til GitHub. Alt annet caches. */
 
-const CACHE = "rode-dager-v1.6.0";
+const CACHE = "rode-dager-v1.7.0";
 const ASSETS = [
   "./",
   "index.html",

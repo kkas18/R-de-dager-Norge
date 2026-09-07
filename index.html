@@ -246,6 +246,28 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
 .crow .who .s{font-size:13px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crow .cnt{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 
+/* ── Utvalg av flere kontakter ────────────────────────── */
+.selhead{display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px}
+.selhead button{font-size:14px;font-weight:600;color:var(--red);padding:6px 8px;border-radius:9px}
+.selhead button.mute{color:var(--muted);font-weight:500}
+.selhead span{font-size:13px;color:var(--muted)}
+.check{flex:0 0 40px;height:40px;display:grid;place-items:center}
+.check i{width:23px;height:23px;border-radius:50%;border:2px solid var(--line);display:block;transition:background .12s,border-color .12s}
+.crow.on{background:var(--red-soft)}
+.crow.on .check i{background:var(--red);border-color:var(--red);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>");
+  background-size:15px;background-position:center;background-repeat:no-repeat}
+.selbar{
+  position:fixed;left:16px;right:16px;bottom:calc(80px + var(--safe-b));z-index:26;
+  display:flex;gap:10px;max-width:600px;margin:0 auto;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px;
+  box-shadow:0 8px 26px rgba(23,24,26,.18);
+}
+.selbar button{flex:1;padding:12px 8px;border-radius:11px;font-size:14.5px;font-weight:600}
+.selbar button:active{background:var(--line-soft)}
+.selbar button.del{color:var(--red)}
+.selbar[hidden]{display:none}
+
 /* ── Tilbake til i dag ────────────────────────────────── */
 .todaybtn{
   position:fixed;left:50%;bottom:calc(84px + var(--safe-b));z-index:25;
@@ -359,6 +381,12 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M15.6 15.6L20 20"/></svg>
       <input type="search" id="kSearch" placeholder="Søk i navn eller nummer" autocomplete="off">
     </div>
+    <button class="primary" id="guideBtn" hidden style="margin:0 0 14px">Sett bursdager</button>
+    <div class="selhead" id="selHead" hidden>
+      <button id="selToggle">Velg</button>
+      <span id="selCount"></span>
+      <button id="selAll" class="mute">Merk alle</button>
+    </div>
     <div id="kList"></div>
     <div class="btnrow">
       <button class="linkbtn" id="addPerson">Legg til person</button>
@@ -466,6 +494,11 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
   I dag
 </button>
 
+<div class="selbar" id="selBar" hidden>
+  <button id="selIcs">Til kalenderen</button>
+  <button id="selDel" class="del">Slett</button>
+</div>
+
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Detaljer">
   <div class="grab" id="grab"><i></i></div>
@@ -477,7 +510,7 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
 
 <script>
 "use strict";
-const VERSION = "1.6.0";
+const VERSION = "1.7.0";
 
 /* ── Hjelpere ─────────────────────────────────────────── */
 const MONTHS = ["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
@@ -1023,6 +1056,24 @@ function initialer(navn){
   const d=(navn||"?").trim().split(/\s+/).filter(Boolean);
   return ((d[0]||"?")[0]+(d.length>1?d[d.length-1][0]:"")).toUpperCase();
 }
+let valgModus=false;
+const valgt=new Set();
+function settValgModus(pa){
+  valgModus=pa; if(!pa) valgt.clear();
+  document.getElementById("selToggle").textContent=pa?"Avbryt":"Velg";
+  document.getElementById("selAll").hidden=!pa;
+  renderKontakter();
+}
+function oppdaterValgLinje(){
+  const n=valgt.size;
+  document.getElementById("selCount").textContent = valgModus ? (n?n+" valgt":"Ingen valgt") : "";
+  document.getElementById("selBar").hidden = !(valgModus&&n);
+  document.getElementById("selDel").textContent = n?"Slett ("+n+")":"Slett";
+  const klare=[...valgt].map(id=>evLoad().find(x=>x.id===id)).filter(x=>x&&evHarDato(x)).length;
+  document.getElementById("selIcs").textContent = klare?"Til kalenderen ("+klare+")":"Til kalenderen";
+  document.getElementById("selIcs").disabled=!klare;
+  document.getElementById("selIcs").style.opacity=klare?"1":".4";
+}
 function renderKontakter(){
   const boks=document.getElementById("kList"), t=today();
   const q=(document.getElementById("kSearch").value||"").toLowerCase().trim();
@@ -1032,6 +1083,11 @@ function renderKontakter(){
   rene.sort((a,b)=>(a.name||"").localeCompare(b.name||"","nb"));
 
   const utenDato=alle.filter(x=>!evHarDato(x)).length;
+  const gb=document.getElementById("guideBtn");
+  gb.hidden=!utenDato||valgModus;
+  gb.textContent="Sett bursdager ("+utenDato+")";
+  document.getElementById("selHead").hidden=!alle.length;
+  oppdaterValgLinje();
   document.getElementById("kHint").textContent = alle.length
     ? (utenDato?utenDato+" av "+alle.length+" mangler bursdag. Trykk på navnet for å sette dato.":
        "Alle "+alle.length+" har bursdag lagt inn.")
@@ -1061,15 +1117,35 @@ function renderKontakter(){
     const sub=har
       ? "Bursdag "+fmtLong(occ)+(alder!==null&&alder>=0?" (fyller "+alder+")":"")
       : (ev.tel?esc(ev.tel):"Ingen bursdag lagt inn");
-    html+='<button class="crow" data-id="'+ev.id+'">'+
-      '<div class="avatar'+(har?" set":"")+'">'+esc(initialer(ev.name))+'</div>'+
+    html+='<button class="crow'+(valgt.has(ev.id)?" on":"")+'" data-id="'+ev.id+'">'+
+      (valgModus?'<div class="check"><i></i></div>'
+               :'<div class="avatar'+(har?" set":"")+'">'+esc(initialer(ev.name))+'</div>')+
       '<div class="who"><div class="t">'+esc(ev.name)+'</div><div class="s">'+sub+'</div></div>'+
       '<div class="cnt">'+(har?(gap===0?"i dag":"om "+gap+" d"):"sett dato")+'</div></button>';
   });
   if(bokstav) html+="</div>";
   boks.innerHTML=html;
   boks.querySelectorAll(".crow").forEach(el=>{
-    el.onclick=()=>{ const ev=evLoad().find(x=>x.id===el.dataset.id); if(ev) kontaktSheet(ev); };
+    const id=el.dataset.id;
+    let timer=null, langt=false;
+    const start=()=>{ langt=false; timer=setTimeout(()=>{
+      langt=true; buzz(12);
+      if(!valgModus){ valgt.add(id); settValgModus(true); }
+      else { valgt.has(id)?valgt.delete(id):valgt.add(id); renderKontakter(); }
+    },450); };
+    const stopp=()=>{ clearTimeout(timer); };
+    el.addEventListener("touchstart",start,{passive:true});
+    el.addEventListener("touchmove",stopp,{passive:true});
+    el.addEventListener("touchend",stopp);
+    el.addEventListener("touchcancel",stopp);
+    el.onclick=()=>{
+      if(langt){ langt=false; return; }
+      if(valgModus){
+        valgt.has(id)?valgt.delete(id):valgt.add(id);
+        renderKontakter(); buzz(5); return;
+      }
+      const ev=evLoad().find(x=>x.id===id); if(ev) kontaktSheet(ev);
+    };
   });
 }
 function kontaktSheet(ev){
@@ -1330,6 +1406,65 @@ document.getElementById("fromContacts").onclick=async()=>{
 document.getElementById("notifBtn").onclick=askNotif;
 document.getElementById("addPerson").onclick=()=>{ evForm(null,{kilde:"kontakter"}); buzz(6); };
 document.getElementById("kSearch").oninput=renderKontakter;
+document.getElementById("selToggle").onclick=()=>{ settValgModus(!valgModus); buzz(6); };
+document.getElementById("selAll").onclick=()=>{
+  const synlige=[...document.querySelectorAll("#kList .crow")].map(el=>el.dataset.id);
+  const alleValgt=synlige.every(id=>valgt.has(id));
+  synlige.forEach(id=>alleValgt?valgt.delete(id):valgt.add(id));
+  document.getElementById("selAll").textContent=alleValgt?"Merk alle":"Fjern alle";
+  renderKontakter(); buzz(6);
+};
+document.getElementById("selDel").onclick=()=>{
+  const n=valgt.size; if(!n) return;
+  if(!confirm(n===1?"Slette kontakten?":"Slette "+n+" kontakter?")) return;
+  evSave(evLoad().filter(x=>!valgt.has(x.id)));
+  settValgModus(false); buzz(10);
+  renderMine(); renderNow(); renderMonth();
+  toast(n===1?"Kontakten er slettet.":n+" kontakter er slettet.");
+};
+document.getElementById("selIcs").onclick=()=>{
+  const liste=evLoad().filter(x=>valgt.has(x.id)&&evHarDato(x));
+  if(!liste.length) return;
+  downloadIcs(liste,"kontakter");
+  settValgModus(false); buzz(8);
+};
+
+/* Veiviser: gå gjennom alle uten bursdag på rad */
+document.getElementById("guideBtn").onclick=()=>{
+  const kø=evLoad().filter(x=>erKontakt(x)&&!evHarDato(x));
+  if(!kø.length){ toast("Alle kontaktene har bursdag."); return; }
+  let i=0, satt=0;
+  const vis=()=>{
+    if(i>=kø.length){
+      closeSheet(); renderKontakter(); renderMine(); renderNow(); renderMonth();
+      toast(satt?("Ferdig, "+satt+" bursdager lagt inn."):"Ingen datoer ble satt.");
+      return;
+    }
+    const ev=kø[i];
+    const body=
+      '<p>'+(ev.tel?esc(ev.tel):"Uten telefonnummer")+'</p>'+
+      '<div class="field"><label for="gDate">Bursdag</label><input type="date" id="gDate"></div>'+
+      '<div class="field"><label for="gRem">Varsel</label><select id="gRem">'+
+        [[0,"På dagen"],[1,"1 dag før"],[3,"3 dager før"],[7,"1 uke før"],[-1,"Ingen"]]
+          .map(([v,l])=>'<option value="'+v+'"'+(v===1?" selected":"")+'>'+l+'</option>').join("")+
+      '</select></div>'+
+      '<button class="primary" id="gSave">Lagre og neste</button>'+
+      '<button class="linkbtn" id="gSkip" style="margin-top:10px">Hopp over</button>';
+    openSheet('<div class="k">'+(i+1)+' av '+kø.length+'</div><div class="h">'+esc(ev.name)+'</div>',body);
+    document.getElementById("gSave").onclick=()=>{
+      const dv=document.getElementById("gDate").value;
+      if(!dv){ toast("Velg en dato, eller hopp over."); return; }
+      const p=dv.split("-").map(Number);
+      const liste=evLoad();
+      const f=liste.find(x=>x.id===ev.id);
+      if(f){ f.day=p[2]; f.month=p[1]; f.year=p[0];
+             f.remind=Number(document.getElementById("gRem").value); }
+      evSave(liste); satt++; buzz(8); i++; vis();
+    };
+    document.getElementById("gSkip").onclick=()=>{ i++; buzz(5); vis(); };
+  };
+  vis(); buzz(6);
+};
 document.getElementById("icsAll").onclick=()=>downloadIcs(evKlare(),"mine-dager");
 document.getElementById("expJson").onclick=()=>{
   const list=evLoad();
@@ -1371,6 +1506,7 @@ function goto(i,dir){
       if(dir!==undefined) v.classList.add(i>from?"in-left":"in-right");
     }
   });
+  if(ORDER[i]!=="kontakter"&&valgModus) settValgModus(false);
   if(ORDER[i]==="beregn"&&document.getElementById("segB").getAttribute("aria-pressed")==="true") renderBridges();
   updateTodayBtn();
   window.scrollTo({top:0});
@@ -1438,6 +1574,8 @@ window.addEventListener("appinstalled",()=>{ installBtn.style.display="none"; })
 function toast(msg,action){
   const el=document.getElementById("toast");
   el.innerHTML=msg+(action?' <button id="tAct">Last inn</button>':"");
+  const bar=document.getElementById("selBar");
+  el.style.bottom = (bar&&!bar.hidden) ? "calc(152px + var(--safe-b))" : "";
   el.classList.add("show");
   if(action) document.getElementById("tAct").onclick=action;
   else setTimeout(()=>el.classList.remove("show"),3200);
