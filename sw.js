@@ -2,7 +2,7 @@
    HTML hentes fra nett først, slik at appen oppdaterer seg selv
    så snart du pusher nye filer til GitHub. Alt annet caches. */
 
-const CACHE = "rode-dager-v1.4.0";
+const CACHE = "rode-dager-v1.5.0";
 const ASSETS = [
   "./",
   "index.html",
@@ -82,7 +82,7 @@ async function sjekkDager() {
   if (svar) { try { sendt = await svar.json(); } catch (e) {} }
 
   for (const ev of dager) {
-    if (!ev || ev.remind < 0) continue;
+    if (!ev || !ev.day || !ev.month || ev.remind < 0) continue;
     const dato = nesteDato(ev, idag);
     const gap = Math.round((dato - idag) / 86400000);
     if (gap < 0 || gap > ev.remind) continue;

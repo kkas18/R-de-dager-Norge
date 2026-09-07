@@ -315,6 +315,8 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
 
   <!-- MINE DAGER -->
   <section class="view" id="v-mine">
+    <h2 id="mangHead" hidden>Mangler dato</h2>
+    <div id="mangList" hidden></div>
     <h2 id="mineHead">Dine dager</h2>
     <div id="mineList"></div>
     <div class="btnrow">
@@ -446,7 +448,7 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
 
 <script>
 "use strict";
-const VERSION = "1.4.0";
+const VERSION = "1.5.0";
 
 /* ── Hjelpere ─────────────────────────────────────────── */
 const MONTHS = ["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
@@ -707,7 +709,7 @@ function renderMonth(dir){
   const weeks=Math.ceil((lead+new Date(y,m+1,0).getDate())/7);
 
   const ownSet=new Set();
-  evLoad().forEach(ev=>{
+  evKlare().forEach(ev=>{
     [y-1,y,y+1].forEach(yy=>{
       if(!ev.arlig&&ev.year!==yy) return;
       ownSet.add(key(occIn(ev,ev.arlig?yy:ev.year)));
@@ -737,7 +739,7 @@ function renderMonth(dir){
                 {duration:190,easing:"cubic-bezier(.22,.61,.36,1)"}); }
 
   const inMonth=daysOf(y).filter(h=>h.d.getMonth()===m).concat(
-    evLoad().map(ev=>({ev,occ:(!ev.arlig&&ev.year!==y)?null:occIn(ev,ev.arlig?y:ev.year)}))
+    evKlare().map(ev=>({ev,occ:(!ev.arlig&&ev.year!==y)?null:occIn(ev,ev.arlig?y:ev.year)}))
       .filter(x=>x.occ&&x.occ.getMonth()===m)
       .map(x=>({d:x.occ,n:x.ev.name,red:false,own:x.ev,sub:evSub(x.ev,x.occ)}))
   ).sort((a,b)=>a.d-b.d);
@@ -926,6 +928,8 @@ function idbPut(list){
     r.onsuccess=()=>{ try{ r.result.transaction("kv","readwrite").objectStore("kv").put(list,"events"); }catch(e){} };
   }catch(e){}
 }
+const evHarDato=ev=>!!(ev&&ev.day&&ev.month);
+const evKlare=()=>evLoad().filter(evHarDato);
 function occIn(ev,y){
   let dd=ev.day;
   if(ev.month===2&&ev.day===29&&new Date(y,1,29).getMonth()!==1) dd=28;
@@ -948,14 +952,14 @@ function evSub(ev,occ){
   return s;
 }
 function evOn(dt){
-  return evLoad().filter(ev=>{
+  return evKlare().filter(ev=>{
     if(ev.arlig) return ev.month===dt.getMonth()+1 && occIn(ev,dt.getFullYear()).getDate()===dt.getDate();
     return ev.year===dt.getFullYear()&&ev.month===dt.getMonth()+1&&ev.day===dt.getDate();
   });
 }
 function evUpcoming(n){
   const t=today();
-  return evLoad().map(ev=>({ev,occ:nextOcc(ev,t)}))
+  return evKlare().map(ev=>({ev,occ:nextOcc(ev,t)}))
     .filter(x=>x.occ>=t)
     .sort((a,b)=>a.occ-b.occ)
     .slice(0,n||99);
@@ -963,6 +967,22 @@ function evUpcoming(n){
 
 function renderMine(){
   const box=document.getElementById("mineList"), t=today();
+
+  const mang=evLoad().filter(ev=>!evHarDato(ev));
+  const mh=document.getElementById("mangHead"), ml=document.getElementById("mangList");
+  mh.hidden=ml.hidden=!mang.length;
+  ml.innerHTML="";
+  mang.forEach(ev=>{
+    const b=document.createElement("button");
+    b.className="evcard";
+    b.innerHTML='<div class="glyph">'+(GLYPH[ev.type]||GLYPH.annet)+'</div>'+
+      '<div class="who"><div class="t">'+esc(ev.name)+'</div><div class="s">'+
+        (ev.tel?esc(ev.tel)+", ":"")+'trykk for å sette dato</div></div>'+
+      '<svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+    b.onclick=()=>evForm(ev);
+    ml.appendChild(b);
+  });
+
   const up=evUpcoming();
   document.getElementById("mineHead").textContent = up.length ? "Dine dager" : "Ingen dager lagt inn";
   if(!up.length){
@@ -987,7 +1007,9 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 function evForm(ev,prefill){
   const isNew=!ev;
   const e=Object.assign({id:"e"+Date.now(),type:"bursdag",name:"",day:today().getDate(),month:today().getMonth()+1,year:null,arlig:true,remind:1,tel:""},ev||prefill||{});
-  const dateVal=(e.year||today().getFullYear())+"-"+String(e.month).padStart(2,"0")+"-"+String(e.day).padStart(2,"0");
+  const dateVal=evHarDato(e)
+    ? (e.year||today().getFullYear())+"-"+String(e.month).padStart(2,"0")+"-"+String(e.day).padStart(2,"0")
+    : "";
   const body=
     '<div class="card" style="box-shadow:none;padding:0;border:0;background:none">'+
       '<div class="field"><label for="evName">Navn</label><input type="text" id="evName" value="'+esc(e.name)+'" placeholder="For eksempel Kari"></div>'+
@@ -997,7 +1019,7 @@ function evForm(ev,prefill){
       '<div class="field"><label for="evDate">Dato</label><input type="date" id="evDate" value="'+dateVal+'"></div>'+
       '<div class="field"><label for="evTel">Telefon</label><input type="tel" id="evTel" value="'+esc(e.tel||"")+'" placeholder="Valgfritt"></div>'+
       '<div class="field"><label for="evYear">Bruk årstallet</label><select id="evYear">'+
-        '<option value="1"'+((e.year||isNew)?" selected":"")+'>Ja, vis alder</option><option value="0"'+((e.year||isNew)?"":" selected")+'>Nei</option>'+
+        '<option value="1"'+((e.year||isNew||!evHarDato(e))?" selected":"")+'>Ja, vis alder</option><option value="0"'+((e.year||isNew||!evHarDato(e))?"":" selected")+'>Nei</option>'+
       '</select></div>'+
       '<div class="field"><label for="evRep">Gjentas hvert år</label><select id="evRep">'+
         '<option value="1"'+(e.arlig?" selected":"")+'>Ja</option><option value="0"'+(e.arlig?"":" selected")+'>Nei</option>'+
@@ -1139,7 +1161,7 @@ function checkReminders(){
   let seen={};
   try{ seen=JSON.parse(localStorage.getItem(NOTIF_KEY)||"{}"); }catch(e){}
   const t=today();
-  evLoad().forEach(ev=>{
+  evKlare().forEach(ev=>{
     if(ev.remind<0) return;
     const occ=nextOcc(ev,t), gap=diffDays(t,occ);
     if(gap>ev.remind||gap<0) return;
@@ -1170,19 +1192,40 @@ document.getElementById("fromContacts").onclick=async()=>{
     const felt=await navigator.contacts.getProperties();
     const be=["name","tel"].filter(x=>felt.includes(x));
     if(!be.length){ toast("Kontaktlisten gir ingen felt appen kan bruke."); return; }
-    const valgt=await navigator.contacts.select(be,{multiple:false});
-    if(!valgt||!valgt.length){ return; }
-    const k=valgt[0];
-    const navn=(k.name&&k.name.find(n=>n&&n.trim()))||"";
-    const tlf=(k.tel&&k.tel.find(t=>t&&t.trim()))||"";
-    if(!navn&&!tlf){ toast("Kontakten hadde verken navn eller nummer."); return; }
-    buzz(8);
-    evForm(null,{name:navn,tel:tlf});
-    toast("Fyll inn bursdagen, den følger ikke med fra kontaktlisten.");
+    const valgt=await navigator.contacts.select(be,{multiple:true});
+    if(!valgt||!valgt.length) return;
+
+    const rene=valgt.map(k=>({
+      navn:(k.name&&k.name.find(n=>n&&n.trim())||"").trim(),
+      tlf:(k.tel&&k.tel.find(t=>t&&t.trim())||"").trim()
+    })).filter(k=>k.navn||k.tlf);
+    if(!rene.length){ toast("Kontaktene hadde verken navn eller nummer."); return; }
+
+    if(rene.length===1){
+      buzz(8);
+      evForm(null,{name:rene[0].navn||rene[0].tlf,tel:rene[0].tlf});
+      toast("Fyll inn bursdagen, den følger ikke med fra kontaktlisten.");
+      return;
+    }
+
+    const list=evLoad();
+    const finnes=new Set(list.map(x=>(x.name||"").toLowerCase()+"|"+(x.tel||"")));
+    let lagt=0;
+    rene.forEach((k,i)=>{
+      const nokkel=(k.navn||"").toLowerCase()+"|"+k.tlf;
+      if(finnes.has(nokkel)) return;
+      finnes.add(nokkel);
+      list.push({id:"e"+Date.now()+"_"+i,name:k.navn||k.tlf,type:"bursdag",
+                 day:null,month:null,year:null,arlig:true,remind:1,tel:k.tlf});
+      lagt++;
+    });
+    evSave(list); buzz(8); renderMine(); renderNow(); renderMonth();
+    goto(ORDER.indexOf("mine"),0);
+    toast(lagt?("La til "+lagt+" kontakter. Sett bursdag på hver av dem."):"Kontaktene lå der fra før.");
   }catch(err){ toast("Kontaktlisten kunne ikke åpnes."); }
 };
 document.getElementById("notifBtn").onclick=askNotif;
-document.getElementById("icsAll").onclick=()=>downloadIcs(evLoad(),"mine-dager");
+document.getElementById("icsAll").onclick=()=>downloadIcs(evKlare(),"mine-dager");
 document.getElementById("expJson").onclick=()=>{
   const list=evLoad();
   if(!list.length){ toast("Ingen dager å ta kopi av."); return; }

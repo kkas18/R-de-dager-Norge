@@ -29,7 +29,8 @@ i kalenderen med grå prikk, på forsiden med nedtelling, og kan legges i
 telefonkalenderen som årlig hendelse med alarm. Navn og telefonnummer kan
 hentes fra telefonens kontaktliste med Contact Picker API, som finnes i Chrome
 på Android. Fødselsdato er ikke blant feltene nettleseren gir ut, så datoen
-skrives inn manuelt. Har dagen et nummer, får du ringe- og meldingsknapp. Dagene lagres lokalt på
+skrives inn manuelt. Velger du flere kontakter samtidig, legges de i en liste
+under «Mangler dato» til du setter datoen på hver av dem. Har dagen et nummer, får du ringe- og meldingsknapp. Dagene lagres lokalt på
 telefonen, og kan tas sikkerhetskopi av som JSON-fil.
 
 **Beregn** har to verktøy: antall virkedager mellom to datoer, og forslag til
