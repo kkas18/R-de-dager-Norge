@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>Røde dager</title>
+<meta name="description" content="Norske røde dager, virkedager og inneklemte dager.">
+<meta name="theme-color" content="#F5F5F3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Røde dager">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+/* ── Grunnlag ─────────────────────────────────────────── */
+:root{
+  --bg:#F5F5F3;
+  --card:#FFFFFF;
+  --fg:#17181A;
+  --muted:#777875;
+  --faint:#A3A3A0;
+  --line:#E4E3DE;
+  --line-soft:#EDECE8;
+  --red:#BA0C2F;
+  --red-soft:rgba(186,12,47,.08);
+  --shadow:0 1px 2px rgba(23,24,26,.04), 0 8px 24px rgba(23,24,26,.05);
+  --r:16px;
+  --serif:"Noto Serif",Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+html[data-theme="dark"]{
+  --bg:#111112;
+  --card:#191A1B;
+  --fg:#EFEEEA;
+  --muted:#8C8D88;
+  --faint:#5E5F5C;
+  --line:#28292A;
+  --line-soft:#212223;
+  --red:#E24357;
+  --red-soft:rgba(226,67,87,.13);
+  --shadow:none;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+.prose,.detail,.sheet .body{-webkit-user-select:text;user-select:text}
+button,input,select{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ── Topplinje ────────────────────────────────────────── */
+header{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(14px + var(--safe-t)) 20px 12px;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(14px);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--line-soft);
+}
+.wordmark{display:flex;align-items:baseline;gap:8px;font-family:var(--serif);font-size:19px;letter-spacing:-.01em}
+.wordmark .dot{width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block;transform:translateY(-3px)}
+.icon-btn{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;color:var(--muted);transition:background .15s,transform .1s}
+.icon-btn:active{background:var(--line-soft);transform:scale(.94)}
+
+/* ── Sider og sveip ───────────────────────────────────── */
+main{padding:18px 20px calc(96px + var(--safe-b));max-width:640px;margin:0 auto;touch-action:pan-y}
+.view{display:none}
+.view.active{display:block}
+#v-kal{padding-bottom:54px}
+.view.in-left{animation:inLeft .22s cubic-bezier(.22,.61,.36,1)}
+.view.in-right{animation:inRight .22s cubic-bezier(.22,.61,.36,1)}
+@keyframes inLeft{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
+@keyframes inRight{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
+h2{font-size:13px;font-weight:600;color:var(--muted);margin:26px 0 10px}
+h2:first-child{margin-top:2px}
+
+/* ── Hero ─────────────────────────────────────────────── */
+.hero{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 22px 20px;box-shadow:var(--shadow)}
+.hero .weekday{font-size:14px;color:var(--muted);margin-bottom:2px}
+.hero .stamp{display:flex;align-items:baseline;gap:10px;font-family:var(--serif)}
+.hero .num{font-size:76px;line-height:.92;color:var(--red);letter-spacing:-.03em}
+.hero .mon{font-size:26px}
+.hero .name{font-family:var(--serif);font-size:22px;margin-top:12px;letter-spacing:-.01em}
+.hero .sub{color:var(--muted);font-size:14px;margin-top:4px}
+.countdown{display:inline-flex;align-items:baseline;gap:7px;margin-top:16px;padding:7px 15px;border-radius:999px;background:var(--red-soft);color:var(--red);font-size:14px;font-weight:500}
+.countdown .big{font-family:var(--serif);font-size:19px;font-weight:400;letter-spacing:-.01em}
+
+/* ── Ukestripe ────────────────────────────────────────── */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.week button{text-align:center;font-size:11px;color:var(--muted);padding:0}
+.week button b{display:block;margin-top:5px;font-family:var(--serif);font-size:15px;font-weight:400;color:var(--fg);padding:5px 0;border-radius:9px;transition:transform .1s}
+.week button:active b{transform:scale(.9)}
+.week button.free b{color:var(--red)}
+.week button.today b{background:var(--fg);color:var(--bg)}
+.week button.today.free b{background:var(--red);color:#fff}
+
+/* ── Lister ───────────────────────────────────────────── */
+.list{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;gap:14px;padding:13px 16px;width:100%;text-align:left;border-top:1px solid var(--line-soft);transition:background .12s}
+.row:first-child{border-top:0}
+.row:active{background:var(--line-soft)}
+.date{flex:0 0 46px;text-align:center}
+.date .d{font-family:var(--serif);font-size:22px;line-height:1;color:var(--red)}
+.date .m{font-size:10px;color:var(--muted);margin-top:3px}
+.row.grey .date .d{color:var(--muted)}
+.meta{flex:1;min-width:0}
+.meta .t{font-size:15px;font-weight:500}
+.meta .s{font-size:13px;color:var(--muted);margin-top:1px}
+.tail{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.chev{color:var(--faint);flex:0 0 auto}
+.empty{padding:18px 16px;font-size:14px;color:var(--muted)}
+
+/* ── Nøkkeltall ───────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:center;box-shadow:var(--shadow)}
+.stat b{display:block;font-family:var(--serif);font-size:28px;font-weight:400;line-height:1}
+.stat span{display:block;font-size:11.5px;color:var(--muted);margin-top:6px}
+.stat.accent b{color:var(--red)}
+
+/* ── Månedskalender ───────────────────────────────────── */
+.cal{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px 14px;box-shadow:var(--shadow);touch-action:pan-y}
+.calhead{display:flex;align-items:center;justify-content:space-between;padding:2px 0 8px}
+.calhead button.arrow{width:44px;height:40px;display:grid;place-items:center;border-radius:11px;color:var(--muted);transition:background .15s,transform .1s}
+.calhead button.arrow:active{background:var(--line-soft);transform:scale(.94)}
+.calhead .title{font-family:var(--serif);font-size:19px;padding:6px 12px;border-radius:11px;transition:background .15s}
+.calhead .title:active{background:var(--line-soft)}
+.grid{display:grid;grid-template-columns:34px repeat(7,1fr);gap:2px}
+.grid .hd{text-align:center;font-size:11px;color:var(--faint);padding:6px 0 8px}
+.grid .wk{display:grid;place-items:center;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.cell{position:relative;aspect-ratio:1/1;display:grid;place-items:center;border-radius:11px;font-family:var(--serif);font-size:16px;transition:background .12s,transform .1s}
+.cell:active{transform:scale(.88)}
+.cell.out{color:var(--faint);opacity:.55}
+.cell.red{color:var(--red)}
+.cell.mark::after{content:"";position:absolute;bottom:5px;width:4px;height:4px;border-radius:50%;background:var(--red)}
+.cell.mark.plain::after{background:var(--faint)}
+.cell.today{background:var(--fg);color:var(--bg)}
+.cell.today.red{background:var(--red);color:#fff}
+.cell.today.mark::after{background:currentColor}
+.cell.sel{box-shadow:inset 0 0 0 2px var(--red)}
+.linkbtn{display:block;width:100%;margin-top:12px;padding:13px;border-radius:13px;background:var(--card);border:1px solid var(--line);font-size:15px;font-weight:500;box-shadow:var(--shadow);transition:transform .1s}
+.linkbtn:active{transform:scale(.985);background:var(--line-soft)}
+.linkbtn[hidden]{display:none}
+
+/* ── Segmentert kontroll ──────────────────────────────── */
+.seg{display:flex;background:var(--line-soft);border-radius:12px;padding:3px;margin-bottom:16px}
+.seg button{flex:1;padding:9px 4px;border-radius:9px;font-size:14px;font-weight:500;color:var(--muted);transition:background .18s,color .18s}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.07)}
+
+/* ── Skjema ───────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line-soft)}
+.field:first-child{border-top:0;padding-top:2px}
+.field label{font-size:14.5px;color:var(--muted)}
+.field input,.field select{background:var(--line-soft);border:1px solid transparent;border-radius:10px;padding:9px 11px;font-size:15px;text-align:right;min-width:150px}
+.field input:focus,.field select:focus{border-color:var(--red);outline:none}
+.result{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+.rline{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;font-size:15px}
+.rline span{color:var(--muted)}
+.rline b{font-family:var(--serif);font-size:19px;font-weight:400;font-variant-numeric:tabular-nums}
+.rline.lead b{font-size:30px;color:var(--red)}
+.hint{font-size:13px;color:var(--muted);margin:10px 2px 0;line-height:1.5}
+
+/* ── Ferieforslag ─────────────────────────────────────── */
+.plan{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.plan .top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.plan .gain{font-family:var(--serif);font-size:15px}
+.plan .gain b{font-size:30px;color:var(--red);font-weight:400;letter-spacing:-.02em}
+.plan .cost{font-size:13px;color:var(--muted);text-align:right}
+.plan .range{font-size:14.5px;margin-top:8px}
+.plan .take{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
+.bar{display:flex;gap:2px;margin-top:12px;height:7px}
+.bar i{flex:1;border-radius:2px;background:var(--line)}
+.bar i.free{background:var(--red)}
+.bar i.vac{background:var(--fg);opacity:.4}
+
+/* ── Om ───────────────────────────────────────────────── */
+.prose{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);font-size:14.5px;line-height:1.65;color:var(--muted)}
+.prose p{margin:0 0 12px}
+.prose p:last-child{margin-bottom:0}
+.prose strong{color:var(--fg);font-weight:600}
+.installbtn{display:none;width:100%;margin-top:12px;padding:14px;border-radius:13px;background:var(--fg);color:var(--bg);font-size:15px;font-weight:600;transition:transform .1s}
+.installbtn:active{transform:scale(.985)}
+
+/* ── Bunnavigasjon ────────────────────────────────────── */
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  display:grid;grid-template-columns:repeat(5,1fr);
+  padding:8px 8px calc(8px + var(--safe-b));
+  background:color-mix(in srgb,var(--bg) 90%,transparent);
+  backdrop-filter:saturate(180%) blur(16px);
+  -webkit-backdrop-filter:saturate(180%) blur(16px);
+  border-top:1px solid var(--line-soft);
+}
+nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;color:var(--muted);font-size:10.5px;font-weight:500;border-radius:12px;transition:color .18s,transform .1s}
+nav button:active{transform:scale(.93)}
+nav button[aria-selected="true"]{color:var(--red)}
+nav svg{width:22px;height:22px}
+
+/* ── Egne dager ───────────────────────────────────────── */
+.evcard{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);transition:transform .1s,background .12s}
+.evcard:active{transform:scale(.99);background:var(--line-soft)}
+.evcard .glyph{flex:0 0 42px;height:42px;border-radius:13px;background:var(--line-soft);display:grid;place-items:center;color:var(--muted)}
+.evcard .who{flex:1;min-width:0}
+.evcard .who .t{font-size:15.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evcard .who .s{font-size:13px;color:var(--muted);margin-top:2px}
+.evcard .cnt{text-align:right;white-space:nowrap}
+.evcard .cnt b{font-family:var(--serif);font-size:22px;font-weight:400;color:var(--red);display:block;line-height:1.1}
+.evcard .cnt span{font-size:11px;color:var(--muted)}
+.btnrow{display:flex;gap:10px;margin-top:12px}
+a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
+.btnrow .linkbtn{margin-top:0}
+.primary{width:100%;margin-top:16px;padding:15px;border-radius:14px;background:var(--fg);color:var(--bg);font-size:15.5px;font-weight:600;transition:transform .1s}
+.primary:active{transform:scale(.985)}
+.danger{width:100%;margin-top:10px;padding:13px;border-radius:13px;color:var(--red);font-size:15px;font-weight:500}
+.danger:active{background:var(--red-soft)}
+.sheet .field input,.sheet .field select{min-width:0;flex:1;max-width:60%}
+.statusline{font-size:14px;color:var(--muted);line-height:1.55}
+.cell.own::before{content:"";position:absolute;top:5px;width:4px;height:4px;border-radius:50%;background:var(--fg);opacity:.55}
+.cell.today.own::before{background:currentColor;opacity:1}
+
+/* ── Tilbake til i dag ────────────────────────────────── */
+.todaybtn{
+  position:fixed;left:50%;bottom:calc(84px + var(--safe-b));z-index:25;
+  display:flex;align-items:center;gap:7px;
+  padding:10px 17px 10px 14px;border-radius:999px;
+  background:var(--fg);color:var(--bg);
+  font-size:14px;font-weight:600;
+  box-shadow:0 6px 20px rgba(23,24,26,.22);
+  transform:translate(-50%,0);
+  transition:opacity .22s ease,transform .22s cubic-bezier(.22,.61,.36,1);
+}
+.todaybtn[hidden]{display:flex;opacity:0;pointer-events:none;transform:translate(-50%,14px)}
+.todaybtn:active{transform:translate(-50%,0) scale(.94)}
+
+/* ── Bunnark ──────────────────────────────────────────── */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(10,10,11,.42);opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:41;
+  max-height:82vh;display:flex;flex-direction:column;
+  background:var(--bg);border-radius:22px 22px 0 0;
+  border-top:1px solid var(--line);
+  transform:translateY(102%);transition:transform .3s cubic-bezier(.22,.61,.36,1);
+  padding-bottom:var(--safe-b);
+}
+.sheet.show{transform:none}
+.grab{width:100%;padding:10px 0 6px;display:grid;place-items:center;flex:0 0 auto;touch-action:none}
+.grab i{width:38px;height:4px;border-radius:2px;background:var(--line);display:block}
+.sheet .head{padding:4px 22px 10px}
+.sheet .head .k{font-size:13px;color:var(--muted)}
+.sheet .head .h{font-family:var(--serif);font-size:24px;margin-top:2px;letter-spacing:-.01em}
+.sheet .head .h.red{color:var(--red)}
+.sheet .body{padding:0 22px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet .body p{margin:0 0 12px;font-size:14.5px;color:var(--muted);line-height:1.6}
+.sheet .facts{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 16px}
+.sheet .facts span{font-size:12.5px;padding:5px 10px;border-radius:999px;background:var(--line-soft);color:var(--muted)}
+.sheet .facts span.red{background:var(--red-soft);color:var(--red);font-weight:500}
+.sheet .list{margin-bottom:6px}
+
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translate(-50%,14px);background:var(--fg);color:var(--bg);padding:11px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:45}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{color:var(--bg);font-weight:600;margin-left:10px;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Røde dager<span class="dot"></span></div>
+  <button class="icon-btn" id="themeBtn" aria-label="Bytt mellom lyst og mørkt tema">
+    <svg id="themeIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></svg>
+  </button>
+</header>
+
+<main id="main">
+  <!-- NÅ -->
+  <section class="view active" id="v-na">
+    <div class="hero" id="hero"></div>
+    <h2>Neste helligdager</h2>
+    <div class="list" id="upcoming"></div>
+    <h2>Merkedager som ikke er røde</h2>
+    <div class="list" id="greydays"></div>
+    <h2 id="ownHead" hidden>Dine dager</h2>
+    <div id="ownList" hidden></div>
+  </section>
+
+  <!-- KALENDER -->
+  <section class="view" id="v-kal">
+    <div class="cal" id="cal">
+      <div class="calhead">
+        <button class="arrow" id="mPrev" aria-label="Forrige måned"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button class="title" id="mTitle"></button>
+        <button class="arrow" id="mNext" aria-label="Neste måned"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="grid" id="mGrid"></div>
+    </div>
+    <h2 id="mListHead">Merkedager</h2>
+    <div class="list" id="mList"></div>
+    <h2 id="yHead">Røde dager i året</h2>
+    <div class="stats" id="yStats"></div>
+    <p class="hint" id="yEaster"></p>
+    <button class="linkbtn" id="yearAll">Se hele året</button>
+  </section>
+
+  <!-- MINE DAGER -->
+  <section class="view" id="v-mine">
+    <h2 id="mineHead">Dine dager</h2>
+    <div id="mineList"></div>
+    <div class="btnrow">
+      <button class="linkbtn" id="addEv">Legg til en dag</button>
+      <button class="linkbtn" id="fromContacts" hidden>Hent fra kontakter</button>
+    </div>
+
+    <h2>Varsler</h2>
+    <div class="card">
+      <p class="statusline" id="notifStatus"></p>
+      <button class="primary" id="notifBtn" hidden>Slå på varsler</button>
+    </div>
+
+    <h2>Kalender og sikkerhetskopi</h2>
+    <div class="card">
+      <p class="statusline">Legg dagene i telefonkalenderen for alarm som virker selv om appen er lukket. Sikkerhetskopien er en fil du kan lagre og hente inn igjen hvis du bytter telefon.</p>
+      <div class="btnrow">
+        <button class="linkbtn" id="icsAll">Til kalender</button>
+        <button class="linkbtn" id="expJson">Sikkerhetskopi</button>
+      </div>
+      <button class="linkbtn" id="impBtn" style="margin-top:10px">Hent inn sikkerhetskopi</button>
+      <input type="file" id="impFile" accept="application/json,.json" hidden>
+    </div>
+  </section>
+
+  <!-- BEREGN -->
+  <section class="view" id="v-beregn">
+    <div class="seg" role="group">
+      <button id="segA" aria-pressed="true">Virkedager</button>
+      <button id="segB" aria-pressed="false">Inneklemte dager</button>
+    </div>
+
+    <div id="calcA">
+      <div class="card">
+        <div class="field"><label for="fFrom">Fra og med</label><input type="date" id="fFrom"></div>
+        <div class="field"><label for="fTo">Til og med</label><input type="date" id="fTo"></div>
+        <div class="result" id="rangeOut"></div>
+      </div>
+      <p class="hint">Virkedager er mandag til fredag som ikke er røde. Perioden regnes med begge datoene.</p>
+      <div id="rangeRed"></div>
+    </div>
+
+    <div id="calcB" hidden>
+      <div class="card">
+        <div class="field"><label for="bYear">År</label><select id="bYear"></select></div>
+        <div class="field"><label for="bBudget">Feriedager å bruke</label><select id="bBudget">
+          <option value="1">Inntil 1</option><option value="2">Inntil 2</option>
+          <option value="3" selected>Inntil 3</option><option value="4">Inntil 4</option>
+          <option value="5">Inntil 5</option><option value="8">Inntil 8</option>
+        </select></div>
+      </div>
+      <p class="hint">Forslagene viser hvor få feriedager som gir flest sammenhengende fridager. Stripen viser periodens dager: rødt er fridag, grått er dagen du tar ut.</p>
+      <div id="bridgeOut" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <!-- OM -->
+  <section class="view" id="v-om">
+    <h2>Hva appen regner ut</h2>
+    <div class="prose">
+      <p><strong>Røde dager</strong> er helligdagene etter lov om helligdager og helligdagsfred, pluss de to offentlige høytidsdagene 1. mai og 17. mai, som er røde i kalenderen uten å være helligdager.</p>
+      <p><strong>Søndager</strong> regnes i loven som helligdager, men i arbeidslivet og i dagligtale menes som regel de navngitte høytidsdagene. Appen skiller derfor mellom dem: søndager er røde i kalenderen, men listene over helligdager tar bare med de navngitte, og nedtellingen kan settes til å hoppe over vanlige søndager.</p>
+      <p><strong>Bevegelige dager</strong> følger påsken. Påskedag er første søndag etter første fullmåne på eller etter 21. mars, og appen regner den ut med Meeus' påskeformel. Kristi himmelfartsdag kommer 39 dager etter, pinsedagene 49 og 50 dager etter.</p>
+      <p><strong>Julaften, påskeaften og nyttårsaften</strong> er ikke røde dager i lovens forstand. Mange har likevel fri eller kortere dag etter tariffavtale, så de vises i grått.</p>
+      <p><strong>Inneklemte dager</strong> finner perioder der noen få feriedager kobler helger og helligdager sammen til én lang fri. Beregningen tar ikke hensyn til turnus eller lokale avtaler.</p>
+      <p>Appen virker uten nett og henter ingenting fra andre tjenester. Alle datoer regnes ut i telefonen.</p>
+    </div>
+    <button class="installbtn" id="installBtn">Installer appen</button>
+    <h2>Innstillinger</h2>
+    <div class="card">
+      <div class="field"><label for="setSun">Nedtellingen viser</label><select id="setSun">
+        <option value="av">Neste helligdag</option>
+        <option value="pa">Neste røde dag</option>
+      </select></div>
+      <p class="statusline" id="setSunHelp"></p>
+    </div>
+
+    <h2>Egne dager og varsler</h2>
+    <div class="prose">
+      <p>Under Mine legger du inn bursdager, jubileer og andre datoer. De lagres bare på denne telefonen, ikke i noen sky, så ta en sikkerhetskopi før du bytter telefon.</p>
+      <p><strong>Varsler i appen</strong> kommer når du åpner den, og er appen installert, kan den også sjekke i bakgrunnen. Tidspunktet for bakgrunnssjekken bestemmes av systemet, og iPhone tillater den ikke i det hele tatt.</p>
+      <p><strong>For alarm du kan stole på</strong>, trykk «Legg i telefonkalenderen» på dagen. Da lager appen en kalenderfil med årlig gjentakelse og alarm på det tidspunktet du har valgt, og telefonens egen kalender tar seg av resten.</p>
+    </div>
+
+    <h2>Slik bruker du den</h2>
+    <div class="prose">
+      <p>Dra sidelengs for å bytte side, eller bruk knappene nederst.</p>
+      <p>I kalenderen drar du sidelengs for å bla mellom måneder. Trykk på en dato for detaljer, og på månedsnavnet for å hoppe til en annen måned.</p>
+      <p>Trykk på en dag i listene for forklaringen bak dagen.</p>
+      <p>Egne dager vises med en grå prikk øverst i kalenderruten, helligdager med rød prikk under.</p>
+    </div>
+    <h2>Datoer i appen</h2>
+    <div class="prose" id="aboutDays"></div>
+    <p class="hint" id="verLine"></p>
+  </section>
+</main>
+
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-v="na">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 2.8v3.6M16 2.8v3.6M3.5 10h17" stroke-linecap="round"/><circle cx="16" cy="15" r="1.9" fill="currentColor" stroke="none"/></svg>
+    Nå</button>
+  <button role="tab" aria-selected="false" data-v="kal">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M3.5 9.5h17M9 9.5v11M14.8 9.5v11M3.5 15h17"/></svg>
+    Kalender</button>
+  <button role="tab" aria-selected="false" data-v="mine">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20v-1.2c0-2.5 2.2-4.3 5-4.3h1c2.8 0 5 1.8 5 4.3V20"/><circle cx="10" cy="8.2" r="3.6"/><path d="M18.5 4.2v3.6M20.3 6h-3.6"/></svg>
+    Mine</button>
+  <button role="tab" aria-selected="false" data-v="beregn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4.5" y="3" width="15" height="18" rx="3"/><path d="M8 8h8M8.5 13h.5M11.8 13h.5M15.2 13h.5M8.5 17h.5M11.8 17h.5M15.2 17h.5"/></svg>
+    Beregn</button>
+  <button role="tab" aria-selected="false" data-v="om">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="1" fill="currentColor" stroke="none"/></svg>
+    Om</button>
+</nav>
+
+<button class="todaybtn" id="todayBtn" hidden aria-label="Gå til dagens dato">
+  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg>
+  I dag
+</button>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Detaljer">
+  <div class="grab" id="grab"><i></i></div>
+  <div class="head" id="sheetHead"></div>
+  <div class="body" id="sheetBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const VERSION = "1.4.0";
+
+/* ── Hjelpere ─────────────────────────────────────────── */
+const MONTHS = ["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
+const MON_S  = ["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
+const DAYS   = ["søndag","mandag","tirsdag","onsdag","torsdag","fredag","lørdag"];
+const DAY_S  = ["sø","ma","ti","on","to","fr","lø"];
+
+const d0=(y,m,d)=>new Date(y,m,d);
+const addDays=(dt,n)=>{const x=d0(dt.getFullYear(),dt.getMonth(),dt.getDate());x.setDate(x.getDate()+n);return x;};
+const key=dt=>dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+const today=()=>{const n=new Date();return d0(n.getFullYear(),n.getMonth(),n.getDate());};
+const diffDays=(a,b)=>Math.round((b-a)/86400000);
+const fmtLong=dt=>dt.getDate()+". "+MONTHS[dt.getMonth()];
+const fmtFull=dt=>DAYS[dt.getDay()]+" "+dt.getDate()+". "+MONTHS[dt.getMonth()]+" "+dt.getFullYear();
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+function isoWeek(dt){
+  const t=d0(dt.getFullYear(),dt.getMonth(),dt.getDate());
+  t.setDate(t.getDate()+3-((t.getDay()+6)%7));
+  const w1=d0(t.getFullYear(),0,4);
+  return 1+Math.round(((t-w1)/86400000-3+((w1.getDay()+6)%7))/7);
+}
+function buzz(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }
+
+/* Påskedag – Meeus/Jones/Butcher */
+function easter(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,
+        f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,
+        i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+        mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  return d0(y,mo-1,da);
+}
+
+/* Merkedager for et år */
+const cache=new Map();
+function daysOf(y){
+  if(cache.has(y)) return cache.get(y);
+  const E=easter(y);
+  const list=[
+    {d:d0(y,0,1),    n:"Første nyttårsdag", red:true,  t:"Fast dato", x:"Første dag i året er helligdag etter lov om helligdager og helligdagsfred."},
+    {d:addDays(E,-7),n:"Palmesøndag",       red:true,  t:"Bevegelig", x:"Søndagen før påske. Rød som alle søndager, og starten på den stille uke."},
+    {d:addDays(E,-3),n:"Skjærtorsdag",      red:true,  t:"Bevegelig", x:"Torsdag før påskedag. Ordet skjær kommer av norrønt skír, som betyr ren."},
+    {d:addDays(E,-2),n:"Langfredag",        red:true,  t:"Bevegelig", x:"Fredag før påskedag. Har egne regler for salg og arrangementer."},
+    {d:addDays(E,-1),n:"Påskeaften",        red:false, t:"Bevegelig", x:"Ikke rød dag, men vanlig fridag eller halv dag i mange avtaler."},
+    {d:E,            n:"Første påskedag",   red:true,  t:"Bevegelig", x:"Første søndag etter første fullmåne på eller etter 21. mars."},
+    {d:addDays(E,1), n:"Andre påskedag",    red:true,  t:"Bevegelig", x:"Mandagen etter påskedag. Siste dag i påskeferien for de fleste."},
+    {d:d0(y,4,1),    n:"Første mai",        red:true,  t:"Fast dato", x:"Arbeidernes dag. Offentlig høytidsdag, likestilt med helligdag i lovverket."},
+    {d:d0(y,4,17),   n:"Syttende mai",      red:true,  t:"Fast dato", x:"Grunnlovsdagen. Offentlig høytidsdag siden 1947."},
+    {d:addDays(E,39),n:"Kristi himmelfartsdag", red:true, t:"Bevegelig", x:"Torsdag, 39 dager etter påskedag. Gir ofte en inneklemt fredag."},
+    {d:addDays(E,49),n:"Første pinsedag",   red:true,  t:"Bevegelig", x:"Sju uker etter påskedag."},
+    {d:addDays(E,50),n:"Andre pinsedag",    red:true,  t:"Bevegelig", x:"Pinsemandag. Alltid en rød mandag."},
+    {d:d0(y,11,24),  n:"Julaften",          red:false, t:"Fast dato", x:"Ikke rød dag. Mange tariffavtaler gir fri eller kort dag."},
+    {d:d0(y,11,25),  n:"Første juledag",    red:true,  t:"Fast dato", x:"Helligdag etter loven."},
+    {d:d0(y,11,26),  n:"Andre juledag",     red:true,  t:"Fast dato", x:"Også kalt annen juledag eller stefansdagen."},
+    {d:d0(y,11,31),  n:"Nyttårsaften",      red:false, t:"Fast dato", x:"Ikke rød dag. Ofte halv arbeidsdag."}
+  ].sort((a,b)=>a.d-b.d);
+
+  const merged=[];
+  for(const h of list){
+    const prev=merged[merged.length-1];
+    if(prev && key(prev.d)===key(h.d)){
+      prev.n=prev.n+" og "+h.n.charAt(0).toLowerCase()+h.n.slice(1);
+      prev.red=prev.red||h.red;
+      prev.x=prev.x+" "+h.x;
+      prev.t=prev.t===h.t?prev.t:"Sammenfall";
+    } else merged.push({...h});
+  }
+  cache.set(y,merged);
+  return merged;
+}
+const redMap=new Map();
+function holidayOn(dt){
+  const y=dt.getFullYear();
+  if(!redMap.has(y)){
+    const m=new Map();
+    daysOf(y).forEach(h=>m.set(key(h.d),h));
+    redMap.set(y,m);
+  }
+  return redMap.get(y).get(key(dt))||null;
+}
+const redOn=dt=>{const h=holidayOn(dt);return h&&h.red?h.n:null;};
+const isFree=dt=>dt.getDay()===0||dt.getDay()===6||!!redOn(dt);
+const isRedDay=dt=>dt.getDay()===0||!!redOn(dt);
+
+/* ── Lagring og tema ──────────────────────────────────── */
+const store={
+  get(k,f){try{const v=localStorage.getItem(k);return v===null?f:v}catch(e){return f}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+};
+function applyTheme(t){
+  document.documentElement.dataset.theme=t;
+  document.querySelector('meta[name="theme-color"]').content = t==="dark"?"#111112":"#F5F5F3";
+  document.getElementById("themeIcon").innerHTML = t==="dark"
+    ? '<path d="M20 14.2A8.4 8.4 0 0 1 9.8 4 8.4 8.4 0 1 0 20 14.2z"/>'
+    : '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
+}
+let theme=store.get("theme", matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+applyTheme(theme);
+document.getElementById("themeBtn").onclick=()=>{
+  theme=theme==="dark"?"light":"dark"; store.set("theme",theme); applyTheme(theme); buzz(8);
+};
+
+/* ── Bunnark ──────────────────────────────────────────── */
+const sheet=document.getElementById("sheet"), scrim=document.getElementById("scrim");
+function openSheet(head,body){
+  document.getElementById("sheetHead").innerHTML=head;
+  document.getElementById("sheetBody").innerHTML=body;
+  sheet.classList.add("show"); scrim.classList.add("show");
+}
+function closeSheet(){ sheet.classList.remove("show"); scrim.classList.remove("show"); }
+scrim.onclick=closeSheet;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+(function dragSheet(){
+  const grab=document.getElementById("grab"); let y0=null;
+  grab.addEventListener("touchstart",e=>{y0=e.touches[0].clientY;sheet.style.transition="none";},{passive:true});
+  grab.addEventListener("touchmove",e=>{
+    if(y0===null)return;
+    const dy=Math.max(0,e.touches[0].clientY-y0);
+    sheet.style.transform="translateY("+dy+"px)";
+  },{passive:true});
+  grab.addEventListener("touchend",e=>{
+    if(y0===null)return;
+    const dy=Math.max(0,(e.changedTouches[0].clientY-y0));
+    sheet.style.transition=""; sheet.style.transform="";
+    if(dy>90) closeSheet();
+    y0=null;
+  });
+})();
+
+function dayFacts(dt){
+  const t=today(), h=holidayOn(dt), gap=diffDays(t,dt);
+  const red=isRedDay(dt);
+  const when = gap===0?"i dag":gap===1?"i morgen":gap===-1?"i går":
+               gap>0?("om "+gap+" dager"):(Math.abs(gap)+" dager siden");
+  const head='<div class="k">'+cap(DAYS[dt.getDay()])+", uke "+isoWeek(dt)+'</div>'+
+             '<div class="h'+(red?" red":"")+'">'+dt.getDate()+". "+MONTHS[dt.getMonth()]+" "+dt.getFullYear()+'</div>';
+  let facts='<div class="facts">'+
+    (red?'<span class="red">Rød dag</span>':'<span>'+(dt.getDay()===6?"Ikke rød dag":"Virkedag")+'</span>')+
+    '<span>'+when+'</span>'+
+    (h?'<span>'+h.t.toLowerCase()+'</span>':"")+'</div>';
+  let body=facts;
+  if(h) body+='<p><strong style="color:var(--fg)">'+h.n+'.</strong> '+h.x+(h.red?"":" Dagen er ikke rød i kalenderen.")+'</p>';
+  else if(dt.getDay()===0) body+='<p>Vanlig søndag. Alle søndager er røde dager, men det er ingen navngitt helligdag denne datoen.</p>';
+  else if(dt.getDay()===6) body+='<p>Lørdag. Fri for de fleste, men ikke rød dag i kalenderen.</p>';
+  else body+='<p>Vanlig virkedag uten merkedag.</p>';
+  const mine=evOn(dt);
+  if(mine.length) body+=mine.map(ev=>{
+    const age=evAge(ev,dt);
+    return '<p><strong style="color:var(--fg)">'+esc(ev.name)+'.</strong> '+(EV_TYPES[ev.type]||"Merkedag")+
+      (age!==null&&age>=0?(ev.type==="bursdag"?", fyller "+age+" år":", "+age+" år"):"")+" denne datoen.</p>";
+  }).join("");
+  const nextH=[...daysOf(dt.getFullYear()),...daysOf(dt.getFullYear()+1)].find(x=>x.red&&x.d>dt);
+  if(nextH){
+    const n=diffDays(dt,nextH.d);
+    body+='<p>Neste helligdag etter denne datoen er '+nextH.n.toLowerCase()+" "+fmtLong(nextH.d)+
+          ", "+n+(n===1?" dag":" dager")+" senere.</p>";
+  }
+  return {head,body};
+}
+function showDay(dt){ const f=dayFacts(dt); openSheet(f.head,f.body); buzz(6); }
+
+/* ── Nå ───────────────────────────────────────────────── */
+let tellSondag=store.get("sondag","av")==="pa";
+function nextRed(from){
+  let dt=from;
+  for(let i=0;i<400;i++){ if(tellSondag?isRedDay(dt):!!redOn(dt)) return dt; dt=addDays(dt,1); }
+  return from;
+}
+function setSunState(){
+  const sel=document.getElementById("setSun");
+  sel.value=tellSondag?"pa":"av";
+  document.getElementById("setSunHelp").textContent = tellSondag
+    ? "Nedtellingen teller til nærmeste røde dag, og de fleste uker er det bare neste søndag."
+    : "Nedtellingen hopper over vanlige søndager og teller til neste navngitte helligdag. Søndager er fortsatt røde i kalenderen.";
+}
+document.getElementById("setSun").onchange=e=>{
+  tellSondag=e.target.value==="pa"; store.set("sondag",e.target.value);
+  setSunState(); renderNow(); buzz(6);
+};
+
+function renderNow(){
+  const t=today(), next=nextRed(t), gap=diffDays(t,next), named=redOn(next);
+  const nextHoliday=[...daysOf(t.getFullYear()),...daysOf(t.getFullYear()+1)].find(h=>h.red&&h.d>=t);
+  const count = gap===0?"I dag":gap===1?"I morgen":"om <span class='big'>"+gap+"</span> dager";
+  let sub;
+  if(gap===0) sub = named?"Rød dag i dag":"Søndag, og dermed rød dag";
+  else if(named) sub = (tellSondag?"Neste røde dag":"Neste helligdag")+(next.getFullYear()!==t.getFullYear()?", i "+next.getFullYear():"");
+  else sub = "Neste helligdag er "+nextHoliday.n.toLowerCase()+" "+fmtLong(nextHoliday.d)+", om "+diffDays(t,nextHoliday.d)+" dager";
+
+  document.getElementById("hero").innerHTML=
+    '<div class="weekday">'+DAYS[next.getDay()]+'</div>'+
+    '<div class="stamp"><div class="num">'+next.getDate()+'</div><div class="mon">'+MONTHS[next.getMonth()]+'</div></div>'+
+    '<div class="name">'+(named||"Vanlig søndag")+'</div>'+
+    '<div class="sub">'+sub+'</div>'+
+    '<div class="countdown">'+count+'</div>'+
+    '<div class="week" id="weekStrip"></div>';
+
+  const strip=document.getElementById("weekStrip");
+  const monday=addDays(t,-((t.getDay()+6)%7));
+  strip.innerHTML="";
+  for(let i=0;i<7;i++){
+    const dt=addDays(monday,i);
+    const b=document.createElement("button");
+    b.className=(isRedDay(dt)?"free ":"")+(diffDays(t,dt)===0?"today":"");
+    b.innerHTML=DAY_S[dt.getDay()]+"<b>"+dt.getDate()+"</b>";
+    b.setAttribute("aria-label",fmtFull(dt));
+    b.onclick=()=>showDay(dt);
+    strip.appendChild(b);
+  }
+
+  fillList(document.getElementById("upcoming"),
+           [...daysOf(t.getFullYear()),...daysOf(t.getFullYear()+1)].filter(h=>h.red&&h.d>=t).slice(0,6), t);
+  fillList(document.getElementById("greydays"),
+           [...daysOf(t.getFullYear()),...daysOf(t.getFullYear()+1)].filter(h=>!h.red&&h.d>=t).slice(0,3), t);
+
+  const own=evUpcoming(4), oh=document.getElementById("ownHead"), ol=document.getElementById("ownList");
+  oh.hidden=ol.hidden=!own.length;
+  ol.innerHTML="";
+  own.forEach(({ev,occ})=>{
+    const gap=diffDays(t,occ);
+    const b=document.createElement("button");
+    b.className="evcard";
+    b.innerHTML='<div class="glyph">'+(GLYPH[ev.type]||GLYPH.annet)+'</div>'+
+      '<div class="who"><div class="t">'+esc(ev.name)+'</div><div class="s">'+evSub(ev,occ)+'</div></div>'+
+      '<div class="cnt"><b>'+(gap===0?"i dag":gap)+'</b><span>'+(gap===0?"&nbsp;":gap===1?"dag":"dager")+'</span></div>';
+    b.onclick=()=>evSheet(ev);
+    ol.appendChild(b);
+  });
+}
+
+function fillList(box,items,ref,emptyText){
+  if(!items.length){ box.innerHTML='<div class="empty">'+(emptyText||"Ingen merkedager.")+"</div>"; return; }
+  box.innerHTML="";
+  items.forEach(h=>{
+    const gap=diffDays(ref,h.d);
+    const tail = gap===0?"i dag":gap===1?"i morgen":gap>0?("om "+gap+" d"):"passert";
+    const b=document.createElement("button");
+    b.className="row"+(h.red?"":" grey");
+    b.innerHTML='<div class="date"><div class="d">'+h.d.getDate()+'</div><div class="m">'+MON_S[h.d.getMonth()]+'</div></div>'+
+      '<div class="meta"><div class="t">'+esc(h.n)+'</div><div class="s">'+(h.sub||DAYS[h.d.getDay()]+(h.red?"":", ikke rød dag"))+'</div></div>'+
+      '<div class="tail">'+tail+'</div>'+
+      '<svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+    b.onclick=()=>h.own?evSheet(h.own):showDay(h.d);
+    box.appendChild(b);
+  });
+}
+
+/* ── Kalender ─────────────────────────────────────────── */
+let cur=today(); cur=d0(cur.getFullYear(),cur.getMonth(),1);
+let selected=null;
+
+function renderMonth(dir){
+  const y=cur.getFullYear(), m=cur.getMonth(), t=today();
+  document.getElementById("mTitle").textContent=cap(MONTHS[m])+" "+y;
+
+  const first=d0(y,m,1);
+  const lead=(first.getDay()+6)%7;
+  const start=addDays(first,-lead);
+  const weeks=Math.ceil((lead+new Date(y,m+1,0).getDate())/7);
+
+  const ownSet=new Set();
+  evLoad().forEach(ev=>{
+    [y-1,y,y+1].forEach(yy=>{
+      if(!ev.arlig&&ev.year!==yy) return;
+      ownSet.add(key(occIn(ev,ev.arlig?yy:ev.year)));
+    });
+  });
+
+  const grid=document.getElementById("mGrid");
+  grid.innerHTML='<div class="hd"></div>'+DAY_S.slice(1).concat(DAY_S[0]).map(d=>'<div class="hd">'+d+'</div>').join("");
+  for(let w=0;w<weeks;w++){
+    const wk=document.createElement("div");
+    wk.className="wk"; wk.textContent=isoWeek(addDays(start,w*7));
+    grid.appendChild(wk);
+    for(let i=0;i<7;i++){
+      const dt=addDays(start,w*7+i);
+      const c=document.createElement("button");
+      c.className="cell"+(dt.getMonth()!==m?" out":"")+(isRedDay(dt)?" red":"")+
+                  (holidayOn(dt)?(holidayOn(dt).red?" mark":" mark plain"):"")+(ownSet.has(key(dt))?" own":"")+(diffDays(t,dt)===0?" today":"")+
+                  (selected&&key(selected)===key(dt)?" sel":"");
+      c.textContent=dt.getDate();
+      c.setAttribute("aria-label",fmtFull(dt));
+      c.onclick=()=>{ selected=dt; renderMonth(); showDay(dt); };
+      grid.appendChild(c);
+    }
+  }
+  if(dir){ const cal=document.getElementById("cal");
+    cal.animate([{opacity:.35,transform:"translateX("+(dir>0?14:-14)+"px)"},{opacity:1,transform:"none"}],
+                {duration:190,easing:"cubic-bezier(.22,.61,.36,1)"}); }
+
+  const inMonth=daysOf(y).filter(h=>h.d.getMonth()===m).concat(
+    evLoad().map(ev=>({ev,occ:(!ev.arlig&&ev.year!==y)?null:occIn(ev,ev.arlig?y:ev.year)}))
+      .filter(x=>x.occ&&x.occ.getMonth()===m)
+      .map(x=>({d:x.occ,n:x.ev.name,red:false,own:x.ev,sub:evSub(x.ev,x.occ)}))
+  ).sort((a,b)=>a.d-b.d);
+  document.getElementById("mListHead").textContent="Merkedager i "+MONTHS[m];
+  fillList(document.getElementById("mList"),inMonth,t,"Ingen merkedager i "+MONTHS[m]+" "+y+".");
+  renderYearStats(y);
+  updateTodayBtn();
+}
+function shiftMonth(n){ cur=d0(cur.getFullYear(),cur.getMonth()+n,1); renderMonth(n); buzz(5); }
+document.getElementById("mPrev").onclick=()=>shiftMonth(-1);
+document.getElementById("mNext").onclick=()=>shiftMonth(1);
+
+/* Snarvei tilbake til dagens måned, vises bare når du står et annet sted */
+const todayBtn=document.getElementById("todayBtn");
+function updateTodayBtn(){
+  const t=today();
+  const away=cur.getFullYear()!==t.getFullYear()||cur.getMonth()!==t.getMonth();
+  todayBtn.hidden=!(away&&ORDER[vi]==="kal");
+}
+todayBtn.onclick=()=>{
+  const t=today(), dir=cur<t?1:-1;
+  cur=d0(t.getFullYear(),t.getMonth(),1);
+  selected=null;
+  renderMonth(dir); buzz(8);
+};
+
+document.getElementById("mTitle").onclick=()=>{
+  const y=cur.getFullYear();
+  let body='<div class="facts">';
+  for(let i=-1;i<=2;i++) body+='<span class="jump'+(y+i===y?" red":"")+'" data-y="'+(y+i)+'">'+(y+i)+'</span>';
+  body+='</div><div class="list">';
+  MONTHS.forEach((mn,i)=>{
+    body+='<button class="row jumpm" data-m="'+i+'"><div class="meta"><div class="t">'+cap(mn)+'</div>'+
+          '<div class="s">'+(n=>n===0?"Ingen røde dager":n===1?"1 rød dag":n+" røde dager")(daysOf(y).filter(h=>h.d.getMonth()===i&&h.red).length)+'</div></div>'+
+          '<svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>';
+  });
+  body+="</div>";
+  openSheet('<div class="k">Gå til</div><div class="h">'+y+'</div>',body);
+  document.querySelectorAll(".jump").forEach(el=>el.onclick=()=>{
+    cur=d0(Number(el.dataset.y),cur.getMonth(),1); renderMonth(); closeSheet(); buzz(5);
+  });
+  document.querySelectorAll(".jumpm").forEach(el=>el.onclick=()=>{
+    cur=d0(cur.getFullYear(),Number(el.dataset.m),1); renderMonth(); closeSheet(); buzz(5);
+  });
+};
+
+function renderYearStats(y){
+  const red=daysOf(y).filter(h=>h.red);
+  const weekday=red.filter(h=>h.d.getDay()>=1&&h.d.getDay()<=5).length;
+  const sundays=52+((d0(y,0,1).getDay()===0||d0(y,11,31).getDay()===0)?1:0);
+  document.getElementById("yHead").textContent="Røde dager i "+y;
+  document.getElementById("yStats").innerHTML=
+    '<div class="stat accent"><b>'+weekday+'</b><span>på hverdag</span></div>'+
+    '<div class="stat"><b>'+(red.length-weekday)+'</b><span>i helg</span></div>'+
+    '<div class="stat"><b>'+sundays+'</b><span>søndager</span></div>';
+  document.getElementById("yEaster").textContent=
+    "Påskedag er "+fmtFull(easter(y))+". Alle bevegelige dager i "+y+" følger denne datoen.";
+}
+document.getElementById("yearAll").onclick=()=>{
+  const y=cur.getFullYear(), t=today();
+  let body='<div class="list">';
+  daysOf(y).forEach(h=>{
+    body+='<div class="row'+(h.red?"":" grey")+'">'+
+      '<div class="date"><div class="d">'+h.d.getDate()+'</div><div class="m">'+MON_S[h.d.getMonth()]+'</div></div>'+
+      '<div class="meta"><div class="t">'+h.n+'</div><div class="s">'+DAYS[h.d.getDay()]+', '+h.t.toLowerCase()+(h.red?"":", ikke rød dag")+'</div></div>'+
+      '<div class="tail">'+(diffDays(t,h.d)>=0?"om "+diffDays(t,h.d)+" d":"passert")+'</div></div>';
+  });
+  body+="</div>";
+  openSheet('<div class="k">Alle merkedager</div><div class="h">'+y+'</div>',body);
+  buzz(5);
+};
+
+/* ── Beregn: virkedager ───────────────────────────────── */
+const fFrom=document.getElementById("fFrom"), fTo=document.getElementById("fTo");
+const parseInput=el=>{const v=el.value;if(!v)return null;const p=v.split("-").map(Number);return d0(p[0],p[1]-1,p[2]);};
+function renderRange(){
+  const a=parseInput(fFrom), b=parseInput(fTo);
+  const out=document.getElementById("rangeOut"), box=document.getElementById("rangeRed");
+  if(!a||!b){ out.innerHTML='<p class="hint" style="margin:0">Velg to datoer for å regne ut perioden.</p>'; box.innerHTML=""; return; }
+  if(b<a){ out.innerHTML='<p class="hint" style="margin:0">Sluttdatoen er før startdatoen. Bytt om på datoene.</p>'; box.innerHTML=""; return; }
+  let total=0,work=0,weekend=0,redWeekday=0; const hits=[];
+  for(let dt=a; dt<=b; dt=addDays(dt,1)){
+    total++;
+    const wknd=dt.getDay()===0||dt.getDay()===6, h=holidayOn(dt), r=h&&h.red;
+    if(wknd) weekend++;
+    if(r&&!wknd) redWeekday++;
+    if(r) hits.push(h);
+    if(!wknd&&!r) work++;
+  }
+  out.innerHTML=
+    '<div class="rline lead"><span>Virkedager</span><b>'+work+'</b></div>'+
+    '<div class="rline"><span>Kalenderdager</span><b>'+total+'</b></div>'+
+    '<div class="rline"><span>Lørdager og søndager</span><b>'+weekend+'</b></div>'+
+    '<div class="rline"><span>Røde dager på hverdag</span><b>'+redWeekday+'</b></div>'+
+    '<div class="rline"><span>Uker</span><b>'+(total/7).toFixed(1).replace(".",",")+'</b></div>';
+  if(hits.length){
+    box.innerHTML='<h2>Helligdager i perioden</h2><div class="list" id="hitList"></div>';
+    fillList(document.getElementById("hitList"),hits,today());
+  } else box.innerHTML="";
+}
+fFrom.oninput=renderRange; fTo.oninput=renderRange;
+
+/* ── Beregn: inneklemte dager ─────────────────────────── */
+function bridges(y,budget){
+  const start=d0(y-1,11,1), end=d0(y+1,0,31), days=[];
+  for(let dt=start; dt<=end; dt=addDays(dt,1)) days.push({d:new Date(dt),free:isFree(dt)});
+  const pre=[0]; days.forEach((x,i)=>pre.push(pre[i]+(x.free?0:1)));
+  const seen=new Map();
+  for(let i=0;i<days.length;i++){
+    if(days[i].free||days[i].d.getFullYear()!==y) continue;
+    for(let j=i;j<Math.min(days.length,i+40);j++){
+      if(days[j].free) continue;
+      const vac=pre[j+1]-pre[i];
+      if(vac>budget) break;
+      let L=i; while(L>0&&days[L-1].free) L--;
+      let R=j; while(R<days.length-1&&days[R+1].free) R++;
+      const total=R-L+1;
+      if(total-vac<2||total<4) continue;
+      let hasRed=false;
+      for(let n=L;n<=R;n++) if(redOn(days[n].d)){hasRed=true;break;}
+      if(!hasRed) continue;
+      const k=L+"_"+R, curr=seen.get(k);
+      if(!curr||vac<curr.vac) seen.set(k,{L,R,i,j,vac,total,net:total-vac});
+    }
+  }
+  const picked=[];
+  [...seen.values()].sort((a,b)=>b.net-a.net||a.vac-b.vac||b.total-a.total).forEach(r=>{
+    if(picked.length>=8) return;
+    if(picked.some(p=>r.L<=p.R&&r.R>=p.L)) return;
+    picked.push(r);
+  });
+  return picked.sort((a,b)=>days[a.L].d-days[b.L].d).map(r=>{
+    const take=[]; for(let n=r.i;n<=r.j;n++) if(!days[n].free) take.push(days[n].d);
+    const bar=[]; for(let n=r.L;n<=r.R;n++) bar.push(days[n].free?"free":"vac");
+    return {from:days[r.L].d,to:days[r.R].d,vac:r.vac,total:r.total,take,bar};
+  });
+}
+function renderBridges(){
+  const y=Number(document.getElementById("bYear").value);
+  const budget=Number(document.getElementById("bBudget").value);
+  const res=bridges(y,budget), box=document.getElementById("bridgeOut");
+  if(!res.length){ box.innerHTML='<div class="card"><p class="hint" style="margin:0">Ingen forslag med så få feriedager i '+y+'. Øk antallet feriedager.</p></div>'; return; }
+  box.innerHTML=res.map(r=>{
+    const span=r.from.getMonth()===r.to.getMonth()
+      ? r.from.getDate()+".–"+r.to.getDate()+". "+MONTHS[r.to.getMonth()]
+      : fmtLong(r.from)+" – "+fmtLong(r.to);
+    const take=r.take.map(d=>DAY_S[d.getDay()]+" "+d.getDate()+"."+(d.getMonth()+1)+".").join(", ");
+    return '<div class="plan"><div class="top">'+
+      '<div class="gain"><b>'+r.total+'</b> fridager</div>'+
+      '<div class="cost">'+r.vac+' '+(r.vac===1?"feriedag":"feriedager")+'<br>'+(r.total-r.vac)+' dager i gevinst</div></div>'+
+      '<div class="range">'+span+'</div>'+
+      '<div class="take">Ta ut: '+take+'</div>'+
+      '<div class="bar">'+r.bar.map(c=>'<i class="'+c+'"></i>').join("")+'</div></div>';
+  }).join("");
+}
+
+/* ── Om ───────────────────────────────────────────────── */
+function renderAbout(){
+  const y=new Date().getFullYear();
+  document.getElementById("aboutDays").innerHTML=
+    "<p><strong>Røde dager:</strong> første nyttårsdag, palmesøndag, skjærtorsdag, langfredag, første og andre påskedag, første mai, syttende mai, Kristi himmelfartsdag, første og andre pinsedag, første og andre juledag, og alle søndager.</p>"+
+    "<p><strong>Vises i grått:</strong> påskeaften, julaften og nyttårsaften.</p>"+
+    "<p>Påskedagen for "+y+" er "+fmtLong(easter(y))+", for "+(y+1)+" er den "+fmtLong(easter(y+1))+".</p>";
+  document.getElementById("verLine").textContent="Røde dager "+VERSION+" · virker uten nett";
+}
+
+/* ── Egne dager ───────────────────────────────────────── */
+const EV_KEY="rd:events", NOTIF_KEY="rd:varslet";
+const EV_TYPES={bursdag:"Bursdag",jubileum:"Jubileum",annet:"Merkedag"};
+const GLYPH={
+  bursdag:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20.5h16M4.8 20.5v-6.2c0-1 .8-1.8 1.8-1.8h10.8c1 0 1.8.8 1.8 1.8v6.2"/><path d="M12 12.5v-3M9 12.5v-3M15 12.5v-3"/><path d="M12 6.4V4.6M9 6.4V5.2M15 6.4V5.2"/></svg>',
+  jubileum:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2l2.3 4.7 5.2.8-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 9.7l5.2-.8z"/></svg>',
+  annet:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v3.4M16 3v3.4M4 10h16"/></svg>'
+};
+function evLoad(){
+  try{ const v=JSON.parse(localStorage.getItem(EV_KEY)||"[]"); return Array.isArray(v)?v:[]; }catch(e){ return []; }
+}
+function evSave(list){
+  try{ localStorage.setItem(EV_KEY,JSON.stringify(list)); }catch(e){}
+  idbPut(list);
+}
+function idbPut(list){
+  try{
+    const r=indexedDB.open("rode-dager",1);
+    r.onupgradeneeded=()=>{ r.result.createObjectStore("kv"); };
+    r.onsuccess=()=>{ try{ r.result.transaction("kv","readwrite").objectStore("kv").put(list,"events"); }catch(e){} };
+  }catch(e){}
+}
+function occIn(ev,y){
+  let dd=ev.day;
+  if(ev.month===2&&ev.day===29&&new Date(y,1,29).getMonth()!==1) dd=28;
+  return d0(y,ev.month-1,dd);
+}
+function nextOcc(ev,from){
+  const f=from||today();
+  if(!ev.arlig) return occIn(ev,ev.year||f.getFullYear());
+  const t=occIn(ev,f.getFullYear());
+  return t<f ? occIn(ev,f.getFullYear()+1) : t;
+}
+function evAge(ev,occ){
+  if(!ev.year) return null;
+  return occ.getFullYear()-ev.year;
+}
+function evSub(ev,occ){
+  const age=evAge(ev,occ);
+  let s=(EV_TYPES[ev.type]||"Merkedag")+", "+fmtLong(occ);
+  if(age!==null&&age>=0) s+= ev.type==="bursdag" ? " (fyller "+age+")" : " ("+age+" år)";
+  return s;
+}
+function evOn(dt){
+  return evLoad().filter(ev=>{
+    if(ev.arlig) return ev.month===dt.getMonth()+1 && occIn(ev,dt.getFullYear()).getDate()===dt.getDate();
+    return ev.year===dt.getFullYear()&&ev.month===dt.getMonth()+1&&ev.day===dt.getDate();
+  });
+}
+function evUpcoming(n){
+  const t=today();
+  return evLoad().map(ev=>({ev,occ:nextOcc(ev,t)}))
+    .filter(x=>x.occ>=t)
+    .sort((a,b)=>a.occ-b.occ)
+    .slice(0,n||99);
+}
+
+function renderMine(){
+  const box=document.getElementById("mineList"), t=today();
+  const up=evUpcoming();
+  document.getElementById("mineHead").textContent = up.length ? "Dine dager" : "Ingen dager lagt inn";
+  if(!up.length){
+    box.innerHTML='<div class="card"><p class="statusline">Legg inn bursdager, jubileer og andre datoer du vil huske. De dukker opp i kalenderen og på forsiden, og du kan få varsel noen dager før.</p></div>';
+    return;
+  }
+  box.innerHTML="";
+  up.forEach(({ev,occ})=>{
+    const gap=diffDays(t,occ);
+    const b=document.createElement("button");
+    b.className="evcard";
+    b.innerHTML='<div class="glyph">'+(GLYPH[ev.type]||GLYPH.annet)+'</div>'+
+      '<div class="who"><div class="t">'+esc(ev.name)+'</div><div class="s">'+evSub(ev,occ)+'</div></div>'+
+      '<div class="cnt"><b>'+(gap===0?"i dag":gap)+'</b><span>'+(gap===0?"&nbsp;":gap===1?"dag":"dager")+'</span></div>';
+    b.onclick=()=>evSheet(ev);
+    box.appendChild(b);
+  });
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* Skjema for ny eller eksisterende dag */
+function evForm(ev,prefill){
+  const isNew=!ev;
+  const e=Object.assign({id:"e"+Date.now(),type:"bursdag",name:"",day:today().getDate(),month:today().getMonth()+1,year:null,arlig:true,remind:1,tel:""},ev||prefill||{});
+  const dateVal=(e.year||today().getFullYear())+"-"+String(e.month).padStart(2,"0")+"-"+String(e.day).padStart(2,"0");
+  const body=
+    '<div class="card" style="box-shadow:none;padding:0;border:0;background:none">'+
+      '<div class="field"><label for="evName">Navn</label><input type="text" id="evName" value="'+esc(e.name)+'" placeholder="For eksempel Kari"></div>'+
+      '<div class="field"><label for="evType">Type</label><select id="evType">'+
+        Object.entries(EV_TYPES).map(([k,v])=>'<option value="'+k+'"'+(e.type===k?" selected":"")+'>'+v+'</option>').join("")+
+      '</select></div>'+
+      '<div class="field"><label for="evDate">Dato</label><input type="date" id="evDate" value="'+dateVal+'"></div>'+
+      '<div class="field"><label for="evTel">Telefon</label><input type="tel" id="evTel" value="'+esc(e.tel||"")+'" placeholder="Valgfritt"></div>'+
+      '<div class="field"><label for="evYear">Bruk årstallet</label><select id="evYear">'+
+        '<option value="1"'+((e.year||isNew)?" selected":"")+'>Ja, vis alder</option><option value="0"'+((e.year||isNew)?"":" selected")+'>Nei</option>'+
+      '</select></div>'+
+      '<div class="field"><label for="evRep">Gjentas hvert år</label><select id="evRep">'+
+        '<option value="1"'+(e.arlig?" selected":"")+'>Ja</option><option value="0"'+(e.arlig?"":" selected")+'>Nei</option>'+
+      '</select></div>'+
+      '<div class="field"><label for="evRem">Varsel</label><select id="evRem">'+
+        [[0,"På dagen"],[1,"1 dag før"],[3,"3 dager før"],[7,"1 uke før"],[-1,"Ingen"]]
+          .map(([v,l])=>'<option value="'+v+'"'+(Number(e.remind)===v?" selected":"")+'>'+l+'</option>').join("")+
+      '</select></div>'+
+    '</div>'+
+    '<button class="primary" id="evSave">Lagre</button>'+
+    (isNew?"":'<button class="danger" id="evDel">Slett dagen</button>');
+  openSheet('<div class="k">'+(isNew?"Ny dag":"Endre")+'</div><div class="h">'+(isNew?"Legg til":esc(e.name))+'</div>',body);
+
+  document.getElementById("evSave").onclick=()=>{
+    const name=document.getElementById("evName").value.trim();
+    const dv=document.getElementById("evDate").value;
+    if(!name||!dv){ toast("Fyll inn navn og dato."); return; }
+    const p=dv.split("-").map(Number);
+    const useYear=document.getElementById("evYear").value==="1";
+    const list=evLoad().filter(x=>x.id!==e.id);
+    list.push({
+      id:e.id, name:name,
+      type:document.getElementById("evType").value,
+      day:p[2], month:p[1], year:useYear?p[0]:null,
+      arlig:document.getElementById("evRep").value==="1",
+      tel:document.getElementById("evTel").value.trim(),
+      remind:Number(document.getElementById("evRem").value)
+    });
+    evSave(list); closeSheet(); buzz(8);
+    renderMine(); renderNow(); renderMonth();
+    toast(isNew?"Dagen er lagret.":"Endringen er lagret.");
+  };
+  if(!isNew) document.getElementById("evDel").onclick=()=>{
+    if(!confirm("Slette "+e.name+"?")) return;
+    evSave(evLoad().filter(x=>x.id!==e.id));
+    closeSheet(); buzz(8); renderMine(); renderNow(); renderMonth();
+    toast("Dagen er slettet.");
+  };
+}
+
+/* Detaljer for en lagret dag */
+function evSheet(ev){
+  const t=today(), occ=nextOcc(ev,t), gap=diffDays(t,occ), age=evAge(ev,occ);
+  let body='<div class="facts"><span class="red">'+(gap===0?"I dag":gap===1?"I morgen":"om "+gap+" dager")+'</span>'+
+           '<span>'+(EV_TYPES[ev.type]||"Merkedag")+'</span>'+
+           (ev.arlig?'<span>hvert år</span>':'<span>én gang</span>')+
+           (ev.remind>=0?'<span>varsel '+(ev.remind===0?"på dagen":ev.remind+" d før")+'</span>':"")+
+           (ev.tel?'<span>'+esc(ev.tel)+'</span>':"")+'</div>';
+  body+='<p>'+cap(DAYS[occ.getDay()])+" "+fmtLong(occ)+" "+occ.getFullYear()+", uke "+isoWeek(occ)+". "+
+        (age!==null&&age>=0?(ev.type==="bursdag"?"Fyller "+age+" år.":"Markerer "+age+" år."):"")+
+        (isRedDay(occ)?" Dagen faller på en rød dag.":"")+'</p>';
+  body+='<button class="primary" id="evIcs">Legg i telefonkalenderen</button>';
+  if(ev.tel){
+    const nr=ev.tel.replace(/[^0-9+()#*-]/g,"");
+    body+='<div class="btnrow"><a class="linkbtn" href="tel:'+nr+'">Ring</a>'+
+          '<a class="linkbtn" href="sms:'+nr+'">Send melding</a></div>';
+  }
+  body+='<button class="linkbtn" id="evEdit" style="margin-top:10px">Endre</button>';
+  openSheet('<div class="k">'+(EV_TYPES[ev.type]||"Merkedag")+'</div><div class="h">'+esc(ev.name)+'</div>',body);
+  document.getElementById("evIcs").onclick=()=>{ downloadIcs([ev], ev.name); buzz(8); };
+  document.getElementById("evEdit").onclick=()=>evForm(ev);
+}
+
+/* ── Kalendereksport ──────────────────────────────────── */
+function icsDate(dt){ return dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0"); }
+function buildIcs(list){
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  let out=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Rode dager//NO","CALSCALE:GREGORIAN"];
+  list.forEach(ev=>{
+    const start=nextOcc(ev,today());
+    const title=ev.name+(ev.type==="bursdag"?" har bursdag":"");
+    out.push("BEGIN:VEVENT");
+    out.push("UID:"+ev.id+"@rode-dager");
+    out.push("DTSTAMP:"+stamp);
+    out.push("DTSTART;VALUE=DATE:"+icsDate(start));
+    out.push("DTEND;VALUE=DATE:"+icsDate(addDays(start,1)));
+    if(ev.arlig) out.push("RRULE:FREQ=YEARLY");
+    out.push("SUMMARY:"+title.replace(/([,;\\])/g,"\\$1"));
+    const desc=[ev.year?"Fra "+ev.year+".":"", ev.tel?"Telefon: "+ev.tel:""].filter(Boolean).join(" ");
+    if(desc) out.push("DESCRIPTION:"+desc.replace(/([,;\\])/g,"\\$1"));
+    out.push("TRANSP:TRANSPARENT");
+    if(ev.remind>=0){
+      out.push("BEGIN:VALARM");
+      out.push("TRIGGER:"+(ev.remind===0?"PT9H":"-PT"+(ev.remind*24-9)+"H"));
+      out.push("ACTION:DISPLAY");
+      out.push("DESCRIPTION:"+title.replace(/([,;\\])/g,"\\$1"));
+      out.push("END:VALARM");
+    }
+    out.push("END:VEVENT");
+  });
+  out.push("END:VCALENDAR");
+  return out.join("\r\n");
+}
+function saveFile(text,name,mime){
+  try{
+    const blob=new Blob([text],{type:mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+  }catch(e){ toast("Klarte ikke å lage filen."); }
+}
+function downloadIcs(list,label){
+  if(!list.length){ toast("Ingen dager å eksportere."); return; }
+  saveFile(buildIcs(list),(label||"mine-dager").toLowerCase().replace(/[^a-z0-9æøå]+/g,"-")+".ics","text/calendar");
+  toast("Åpne filen for å legge den i kalenderen.");
+}
+
+/* ── Varsler ──────────────────────────────────────────── */
+function notifState(){
+  const box=document.getElementById("notifStatus"), btn=document.getElementById("notifBtn");
+  if(!("Notification" in window)){
+    box.textContent="Denne nettleseren støtter ikke varsler. Bruk kalendereksporten under for å få alarm.";
+    btn.hidden=true; return;
+  }
+  const p=Notification.permission;
+  btn.hidden = p!=="default";
+  if(p==="granted") box.textContent="Varsler er på. Appen sier fra når en av dagene nærmer seg. Er appen installert på telefonen, kan den også sjekke i bakgrunnen, men tidspunktet bestemmes av systemet. For alarm du kan stole på, legg dagen i telefonkalenderen.";
+  else if(p==="denied") box.textContent="Varsler er avslått i nettleserinnstillingene. Du får fortsatt beskjed inne i appen, og kalendereksporten gir alarm uansett.";
+  else box.textContent="Slå på varsler for å få beskjed før bursdager og merkedager, også når appen er lukket.";
+}
+async function askNotif(){
+  try{
+    const p=await Notification.requestPermission();
+    notifState();
+    if(p==="granted"){ buzz(8); checkReminders(); registerPeriodic(); }
+  }catch(e){}
+}
+async function registerPeriodic(){
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    if(!("periodicSync" in reg)) return;
+    const st=await navigator.permissions.query({name:"periodic-background-sync"});
+    if(st.state==="granted") await reg.periodicSync.register("sjekk-dager",{minInterval:12*60*60*1000});
+  }catch(e){}
+}
+function checkReminders(){
+  if(!("Notification" in window)||Notification.permission!=="granted") return;
+  let seen={};
+  try{ seen=JSON.parse(localStorage.getItem(NOTIF_KEY)||"{}"); }catch(e){}
+  const t=today();
+  evLoad().forEach(ev=>{
+    if(ev.remind<0) return;
+    const occ=nextOcc(ev,t), gap=diffDays(t,occ);
+    if(gap>ev.remind||gap<0) return;
+    const k=ev.id+"_"+occ.getFullYear();
+    if(seen[k]) return;
+    const when=gap===0?"i dag":gap===1?"i morgen":"om "+gap+" dager";
+    const age=evAge(ev,occ);
+    const body=ev.name+(ev.type==="bursdag"?(age!==null&&age>=0?" fyller "+age+" år ":" har bursdag ")+when
+                      :" – "+when)+", "+DAYS[occ.getDay()]+" "+fmtLong(occ)+".";
+    try{
+      navigator.serviceWorker.ready.then(reg=>reg.showNotification(
+        (EV_TYPES[ev.type]||"Merkedag")+" "+when,{body:body,icon:"icons/icon-192.png",badge:"icons/icon-192.png",tag:k}
+      )).catch(()=>{ new Notification((EV_TYPES[ev.type]||"Merkedag")+" "+when,{body:body,icon:"icons/icon-192.png"}); });
+    }catch(e){}
+    seen[k]=1;
+  });
+  try{ localStorage.setItem(NOTIF_KEY,JSON.stringify(seen)); }catch(e){}
+}
+
+document.getElementById("addEv").onclick=()=>{ evForm(null); buzz(6); };
+
+/* Hent navn og telefonnummer fra telefonens kontaktliste.
+   Bursdag gir ikke nettleseren ut, så datoen fylles inn manuelt. */
+const kontakterStottes = ("contacts" in navigator) && ("ContactsManager" in window);
+if(kontakterStottes) document.getElementById("fromContacts").hidden=false;
+document.getElementById("fromContacts").onclick=async()=>{
+  try{
+    const felt=await navigator.contacts.getProperties();
+    const be=["name","tel"].filter(x=>felt.includes(x));
+    if(!be.length){ toast("Kontaktlisten gir ingen felt appen kan bruke."); return; }
+    const valgt=await navigator.contacts.select(be,{multiple:false});
+    if(!valgt||!valgt.length){ return; }
+    const k=valgt[0];
+    const navn=(k.name&&k.name.find(n=>n&&n.trim()))||"";
+    const tlf=(k.tel&&k.tel.find(t=>t&&t.trim()))||"";
+    if(!navn&&!tlf){ toast("Kontakten hadde verken navn eller nummer."); return; }
+    buzz(8);
+    evForm(null,{name:navn,tel:tlf});
+    toast("Fyll inn bursdagen, den følger ikke med fra kontaktlisten.");
+  }catch(err){ toast("Kontaktlisten kunne ikke åpnes."); }
+};
+document.getElementById("notifBtn").onclick=askNotif;
+document.getElementById("icsAll").onclick=()=>downloadIcs(evLoad(),"mine-dager");
+document.getElementById("expJson").onclick=()=>{
+  const list=evLoad();
+  if(!list.length){ toast("Ingen dager å ta kopi av."); return; }
+  saveFile(JSON.stringify({app:"rode-dager",versjon:VERSION,dager:list},null,2),"mine-dager.json","application/json");
+};
+document.getElementById("impBtn").onclick=()=>document.getElementById("impFile").click();
+document.getElementById("impFile").onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      const inn=Array.isArray(data)?data:data.dager;
+      if(!Array.isArray(inn)) throw 0;
+      const now=evLoad(), ids=new Set(now.map(x=>x.id));
+      let lagt=0;
+      inn.forEach(x=>{ if(x&&x.name&&x.day&&x.month&&!ids.has(x.id)){ now.push(x); lagt++; } });
+      evSave(now); renderMine(); renderNow(); renderMonth();
+      toast(lagt?("Hentet inn "+lagt+" dager."):"Alle dagene lå der fra før.");
+    }catch(err){ toast("Filen kunne ikke leses."); }
+    e.target.value="";
+  };
+  r.readAsText(f);
+};
+
+/* ── Navigasjon og sveip ──────────────────────────────── */
+const ORDER=["na","kal","mine","beregn","om"];
+let vi=Math.max(0,ORDER.indexOf(store.get("tab","na")));
+function goto(i,dir){
+  i=Math.max(0,Math.min(ORDER.length-1,i));
+  if(i===vi&&dir!==undefined) return;
+  const from=vi; vi=i; store.set("tab",ORDER[i]);
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.v===ORDER[i])));
+  document.querySelectorAll(".view").forEach(v=>{
+    v.classList.remove("active","in-left","in-right");
+    if(v.id==="v-"+ORDER[i]){
+      v.classList.add("active");
+      if(dir!==undefined) v.classList.add(i>from?"in-left":"in-right");
+    }
+  });
+  if(ORDER[i]==="beregn"&&document.getElementById("segB").getAttribute("aria-pressed")==="true") renderBridges();
+  updateTodayBtn();
+  window.scrollTo({top:0});
+}
+document.querySelectorAll("nav button").forEach(b=>{
+  b.onclick=()=>{ buzz(8); goto(ORDER.indexOf(b.dataset.v),0); };
+});
+
+/* Sveip: sidebytte, eller månedsbytte inne i kalenderen */
+(function swipe(){
+  const main=document.getElementById("main");
+  let x0=null,y0=null,inCal=false,locked=false;
+  main.addEventListener("touchstart",e=>{
+    if(e.touches.length!==1||sheet.classList.contains("show")) return;
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY; locked=false;
+    inCal=!!e.target.closest("#cal");
+  },{passive:true});
+  main.addEventListener("touchmove",e=>{
+    if(x0===null||locked) return;
+    const dx=e.touches[0].clientX-x0, dy=e.touches[0].clientY-y0;
+    if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>12){ x0=null; return; }
+    if(Math.abs(dx)>55){
+      locked=true;
+      if(inCal) shiftMonth(dx<0?1:-1);
+      else { buzz(6); goto(vi+(dx<0?1:-1),dx<0?1:-1); }
+      x0=null;
+    }
+  },{passive:true});
+  main.addEventListener("touchend",()=>{x0=null;});
+})();
+
+const segA=document.getElementById("segA"), segB=document.getElementById("segB");
+segA.onclick=()=>{segA.setAttribute("aria-pressed","true");segB.setAttribute("aria-pressed","false");
+  document.getElementById("calcA").hidden=false;document.getElementById("calcB").hidden=true;buzz(5);};
+segB.onclick=()=>{segB.setAttribute("aria-pressed","true");segA.setAttribute("aria-pressed","false");
+  document.getElementById("calcB").hidden=false;document.getElementById("calcA").hidden=true;renderBridges();buzz(5);};
+
+/* ── Installasjon ─────────────────────────────────────── */
+let installEvent=null;
+const installBtn=document.getElementById("installBtn");
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault(); installEvent=e; installBtn.style.display="block";
+});
+installBtn.onclick=async()=>{
+  if(!installEvent) return;
+  installEvent.prompt();
+  await installEvent.userChoice;
+  installEvent=null; installBtn.style.display="none";
+};
+window.addEventListener("appinstalled",()=>{ installBtn.style.display="none"; });
+
+/* ── Oppstart ─────────────────────────────────────────── */
+(function init(){
+  const t=today();
+  fFrom.value=key(t); fTo.value=key(addDays(t,30));
+  const sel=document.getElementById("bYear");
+  for(let i=0;i<4;i++){const y=t.getFullYear()+i;sel.innerHTML+='<option value="'+y+'">'+y+'</option>';}
+  sel.onchange=renderBridges;
+  document.getElementById("bBudget").onchange=renderBridges;
+  renderNow(); renderMonth(); renderMine(); renderRange(); renderAbout(); notifState(); setSunState(); goto(vi);
+  setTimeout(()=>{ checkReminders(); registerPeriodic(); },1200);
+})();
+
+/* ── Service worker ───────────────────────────────────── */
+function toast(msg,action){
+  const el=document.getElementById("toast");
+  el.innerHTML=msg+(action?' <button id="tAct">Last inn</button>':"");
+  el.classList.add("show");
+  if(action) document.getElementById("tAct").onclick=action;
+  else setTimeout(()=>el.classList.remove("show"),3200);
+}
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      reg.addEventListener("updatefound",()=>{
+        const nw=reg.installing;
+        nw&&nw.addEventListener("statechange",()=>{
+          if(nw.state==="installed"&&navigator.serviceWorker.controller)
+            toast("Ny versjon er klar.",()=>nw.postMessage("skip"));
+        });
+      });
+    }).catch(()=>{});
+    let reloading=false;
+    navigator.serviceWorker.addEventListener("controllerchange",()=>{ if(!reloading){reloading=true;location.reload();} });
+  });
+}
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden){ renderNow(); renderMonth(); renderMine(); checkReminders(); }
+});
+</script>
+</body>
+</html>

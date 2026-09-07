@@ -1,0 +1,26 @@
+{
+  "name": "Røde dager",
+  "short_name": "Røde dager",
+  "description": "Norske røde dager, virkedager og inneklemte dager – uten nett.",
+  "lang": "nb-NO",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "id": "/rode-dager/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#F5F5F3",
+  "theme_color": "#F5F5F3",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Neste røde dag", "url": "./", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

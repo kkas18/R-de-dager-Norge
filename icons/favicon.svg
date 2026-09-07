@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Røde dager">
+  <rect width="64" height="64" rx="14.4" fill="#17181A"/>
+  <rect x="12.80" y="12.42" width="38.40" height="39.17" rx="4.61" fill="#F5F5F3"/>
+  <rect x="23.26" y="15.94" width="2.11" height="3.33" rx="1.06" fill="#17181A"/><rect x="38.62" y="15.94" width="2.11" height="3.33" rx="1.06" fill="#17181A"/>
+  <rect x="12.80" y="24.17" width="38.40" height="0.4" fill="#D0CFCA"/>
+  <rect x="18.56" y="29.65" width="6.63" height="6.48" rx="2.20" fill="#D0CFCA"/><rect x="28.68" y="29.65" width="6.63" height="6.48" rx="2.20" fill="#D0CFCA"/><rect x="38.81" y="29.65" width="6.63" height="6.48" rx="2.20" fill="#D0CFCA"/><rect x="18.56" y="39.63" width="6.63" height="6.48" rx="2.20" fill="#D0CFCA"/><rect x="28.68" y="39.63" width="6.63" height="6.48" rx="2.20" fill="#D0CFCA"/><rect x="38.81" y="39.63" width="6.63" height="6.48" rx="2.20" fill="#BA0C2F"/>
+</svg>
