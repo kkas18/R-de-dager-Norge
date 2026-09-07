@@ -29,9 +29,15 @@ i kalenderen med grå prikk, på forsiden med nedtelling, og kan legges i
 telefonkalenderen som årlig hendelse med alarm. Navn og telefonnummer kan
 hentes fra telefonens kontaktliste med Contact Picker API, som finnes i Chrome
 på Android. Fødselsdato er ikke blant feltene nettleseren gir ut, så datoen
-skrives inn manuelt. Velger du flere kontakter samtidig, legges de i en liste
-under «Mangler dato» til du setter datoen på hver av dem. Har dagen et nummer, får du ringe- og meldingsknapp. Dagene lagres lokalt på
+skrives inn manuelt. Velger du flere kontakter samtidig, havner alle i Kontakter-fanen,
+og du setter datoen på hver av dem der. Har dagen et nummer, får du ringe- og meldingsknapp. Dagene lagres lokalt på
 telefonen, og kan tas sikkerhetskopi av som JSON-fil.
+
+**Kontakter** er personene dine som en telefonliste: sortert på navn, gruppert
+på forbokstav, med søk på navn og nummer. Hentes fra telefonens kontaktliste
+eller legges inn manuelt. Trykk et navn for å sette bursdag, ringe, sende
+melding eller legge dagen i telefonkalenderen. Kontakter uten bursdag ligger i
+listen til du setter datoen, og holdes utenfor kalender, nedtelling og varsler.
 
 **Beregn** har to verktøy: antall virkedager mellom to datoer, og forslag til
 inneklemte dager — hvilke få feriedager som gir flest sammenhengende fridager.

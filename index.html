@@ -196,17 +196,17 @@ h2:first-child{margin-top:2px}
 /* ── Bunnavigasjon ────────────────────────────────────── */
 nav{
   position:fixed;left:0;right:0;bottom:0;z-index:30;
-  display:grid;grid-template-columns:repeat(5,1fr);
+  display:grid;grid-template-columns:repeat(6,1fr);
   padding:8px 8px calc(8px + var(--safe-b));
   background:color-mix(in srgb,var(--bg) 90%,transparent);
   backdrop-filter:saturate(180%) blur(16px);
   -webkit-backdrop-filter:saturate(180%) blur(16px);
   border-top:1px solid var(--line-soft);
 }
-nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;color:var(--muted);font-size:10.5px;font-weight:500;border-radius:12px;transition:color .18s,transform .1s}
+nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 1px;color:var(--muted);font-size:10px;font-weight:500;border-radius:12px;transition:color .18s,transform .1s}
 nav button:active{transform:scale(.93)}
 nav button[aria-selected="true"]{color:var(--red)}
-nav svg{width:22px;height:22px}
+nav svg{width:21px;height:21px}
 
 /* ── Egne dager ───────────────────────────────────────── */
 .evcard{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);transition:transform .1s,background .12s}
@@ -229,6 +229,22 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
 .statusline{font-size:14px;color:var(--muted);line-height:1.55}
 .cell.own::before{content:"";position:absolute;top:5px;width:4px;height:4px;border-radius:50%;background:var(--fg);opacity:.55}
 .cell.today.own::before{background:currentColor;opacity:1}
+
+/* ── Kontaktliste ─────────────────────────────────────── */
+.search{position:relative;margin-bottom:12px}
+.search input{width:100%;padding:12px 14px 12px 40px;border-radius:13px;border:1px solid var(--line);background:var(--card);font-size:15px;box-shadow:var(--shadow)}
+.search input:focus{outline:none;border-color:var(--red)}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--faint);pointer-events:none}
+.ltr{font-size:11.5px;font-weight:600;color:var(--faint);padding:14px 4px 6px}
+.crow{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:11px 14px;border-top:1px solid var(--line-soft);transition:background .12s}
+.crow:first-child{border-top:0}
+.crow:active{background:var(--line-soft)}
+.avatar{flex:0 0 40px;height:40px;border-radius:50%;background:var(--line-soft);display:grid;place-items:center;font-family:var(--serif);font-size:16px;color:var(--muted)}
+.avatar.set{background:var(--red-soft);color:var(--red)}
+.crow .who{flex:1;min-width:0}
+.crow .who .t{font-size:15.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .who .s{font-size:13px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .cnt{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 
 /* ── Tilbake til i dag ────────────────────────────────── */
 .todaybtn{
@@ -315,14 +331,9 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
 
   <!-- MINE DAGER -->
   <section class="view" id="v-mine">
-    <h2 id="mangHead" hidden>Mangler dato</h2>
-    <div id="mangList" hidden></div>
     <h2 id="mineHead">Dine dager</h2>
     <div id="mineList"></div>
-    <div class="btnrow">
-      <button class="linkbtn" id="addEv">Legg til en dag</button>
-      <button class="linkbtn" id="fromContacts" hidden>Hent fra kontakter</button>
-    </div>
+    <button class="linkbtn" id="addEv">Legg til en dag</button>
 
     <h2>Varsler</h2>
     <div class="card">
@@ -340,6 +351,20 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
       <button class="linkbtn" id="impBtn" style="margin-top:10px">Hent inn sikkerhetskopi</button>
       <input type="file" id="impFile" accept="application/json,.json" hidden>
     </div>
+  </section>
+
+  <!-- KONTAKTER -->
+  <section class="view" id="v-kontakter">
+    <div class="search">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M15.6 15.6L20 20"/></svg>
+      <input type="search" id="kSearch" placeholder="Søk i navn eller nummer" autocomplete="off">
+    </div>
+    <div id="kList"></div>
+    <div class="btnrow">
+      <button class="linkbtn" id="addPerson">Legg til person</button>
+      <button class="linkbtn" id="fromContacts" hidden>Hent fra kontakter</button>
+    </div>
+    <p class="hint" id="kHint"></p>
   </section>
 
   <!-- BEREGN -->
@@ -406,6 +431,7 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
       <p>Dra sidelengs for å bytte side, eller bruk knappene nederst.</p>
       <p>I kalenderen drar du sidelengs for å bla mellom måneder. Trykk på en dato for detaljer, og på månedsnavnet for å hoppe til en annen måned.</p>
       <p>Trykk på en dag i listene for forklaringen bak dagen.</p>
+      <p>Under Kontakter ligger personene dine som en telefonliste, sortert på navn og med søk. Trykk et navn for å sette bursdag, ringe eller sende melding.</p>
       <p>Egne dager vises med en grå prikk øverst i kalenderruten, helligdager med rød prikk under.</p>
     </div>
     <h2>Datoer i appen</h2>
@@ -424,6 +450,9 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
   <button role="tab" aria-selected="false" data-v="mine">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20v-1.2c0-2.5 2.2-4.3 5-4.3h1c2.8 0 5 1.8 5 4.3V20"/><circle cx="10" cy="8.2" r="3.6"/><path d="M18.5 4.2v3.6M20.3 6h-3.6"/></svg>
     Mine</button>
+  <button role="tab" aria-selected="false" data-v="kontakter">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.2" width="14.5" height="17.6" rx="3"/><path d="M5 7.6H2.9M5 12h-2.1M5 16.4H2.9"/><circle cx="12.2" cy="10.2" r="2.3"/><path d="M8.6 17c.4-1.7 1.9-2.7 3.6-2.7s3.2 1 3.6 2.7"/></svg>
+    Kontakter</button>
   <button role="tab" aria-selected="false" data-v="beregn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4.5" y="3" width="15" height="18" rx="3"/><path d="M8 8h8M8.5 13h.5M11.8 13h.5M15.2 13h.5M8.5 17h.5M11.8 17h.5M15.2 17h.5"/></svg>
     Beregn</button>
@@ -448,7 +477,7 @@ a.linkbtn{text-decoration:none;color:inherit;text-align:center;display:block}
 
 <script>
 "use strict";
-const VERSION = "1.5.0";
+const VERSION = "1.6.0";
 
 /* ── Hjelpere ─────────────────────────────────────────── */
 const MONTHS = ["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
@@ -968,21 +997,6 @@ function evUpcoming(n){
 function renderMine(){
   const box=document.getElementById("mineList"), t=today();
 
-  const mang=evLoad().filter(ev=>!evHarDato(ev));
-  const mh=document.getElementById("mangHead"), ml=document.getElementById("mangList");
-  mh.hidden=ml.hidden=!mang.length;
-  ml.innerHTML="";
-  mang.forEach(ev=>{
-    const b=document.createElement("button");
-    b.className="evcard";
-    b.innerHTML='<div class="glyph">'+(GLYPH[ev.type]||GLYPH.annet)+'</div>'+
-      '<div class="who"><div class="t">'+esc(ev.name)+'</div><div class="s">'+
-        (ev.tel?esc(ev.tel)+", ":"")+'trykk for å sette dato</div></div>'+
-      '<svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
-    b.onclick=()=>evForm(ev);
-    ml.appendChild(b);
-  });
-
   const up=evUpcoming();
   document.getElementById("mineHead").textContent = up.length ? "Dine dager" : "Ingen dager lagt inn";
   if(!up.length){
@@ -1002,6 +1016,92 @@ function renderMine(){
   });
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ── Kontaktfanen ─────────────────────────────────────── */
+const erKontakt=ev=>ev.kilde==="kontakter"||!!ev.tel;
+function initialer(navn){
+  const d=(navn||"?").trim().split(/\s+/).filter(Boolean);
+  return ((d[0]||"?")[0]+(d.length>1?d[d.length-1][0]:"")).toUpperCase();
+}
+function renderKontakter(){
+  const boks=document.getElementById("kList"), t=today();
+  const q=(document.getElementById("kSearch").value||"").toLowerCase().trim();
+  const alle=evLoad().filter(erKontakt);
+  const rene=q?alle.filter(x=>(x.name||"").toLowerCase().includes(q)||
+                              (x.tel||"").replace(/\s/g,"").includes(q.replace(/\s/g,""))):alle;
+  rene.sort((a,b)=>(a.name||"").localeCompare(b.name||"","nb"));
+
+  const utenDato=alle.filter(x=>!evHarDato(x)).length;
+  document.getElementById("kHint").textContent = alle.length
+    ? (utenDato?utenDato+" av "+alle.length+" mangler bursdag. Trykk på navnet for å sette dato.":
+       "Alle "+alle.length+" har bursdag lagt inn.")
+    : "";
+
+  if(!rene.length){
+    boks.innerHTML='<div class="card"><p class="statusline">'+
+      (alle.length?"Ingen treff på søket.":
+       "Ingen kontakter ennå. Hent dem fra telefonens kontaktliste, eller legg inn en person manuelt. Så setter du bursdagen på hver av dem.")+
+      '</p></div>';
+    return;
+  }
+
+  let html="", bokstav="";
+  rene.forEach(ev=>{
+    const b=((ev.name||"?")[0]||"?").toUpperCase();
+    const l=/[A-ZÆØÅ]/.test(b)?b:"#";
+    if(l!==bokstav){
+      if(bokstav) html+="</div>";
+      html+='<div class="ltr">'+l+'</div><div class="list">';
+      bokstav=l;
+    }
+    const har=evHarDato(ev);
+    const occ=har?nextOcc(ev,t):null;
+    const gap=har?diffDays(t,occ):null;
+    const alder=har?evAge(ev,occ):null;
+    const sub=har
+      ? "Bursdag "+fmtLong(occ)+(alder!==null&&alder>=0?" (fyller "+alder+")":"")
+      : (ev.tel?esc(ev.tel):"Ingen bursdag lagt inn");
+    html+='<button class="crow" data-id="'+ev.id+'">'+
+      '<div class="avatar'+(har?" set":"")+'">'+esc(initialer(ev.name))+'</div>'+
+      '<div class="who"><div class="t">'+esc(ev.name)+'</div><div class="s">'+sub+'</div></div>'+
+      '<div class="cnt">'+(har?(gap===0?"i dag":"om "+gap+" d"):"sett dato")+'</div></button>';
+  });
+  if(bokstav) html+="</div>";
+  boks.innerHTML=html;
+  boks.querySelectorAll(".crow").forEach(el=>{
+    el.onclick=()=>{ const ev=evLoad().find(x=>x.id===el.dataset.id); if(ev) kontaktSheet(ev); };
+  });
+}
+function kontaktSheet(ev){
+  const t=today(), har=evHarDato(ev);
+  const occ=har?nextOcc(ev,t):null, gap=har?diffDays(t,occ):null, alder=har?evAge(ev,occ):null;
+  let body='<div class="facts">'+
+    (har?'<span class="red">'+(gap===0?"Bursdag i dag":gap===1?"Bursdag i morgen":"om "+gap+" dager")+'</span>'
+        :'<span>Ingen bursdag lagt inn</span>')+
+    (ev.tel?'<span>'+esc(ev.tel)+'</span>':"")+
+    (har&&ev.remind>=0?'<span>varsel '+(ev.remind===0?"på dagen":ev.remind+" d før")+'</span>':"")+'</div>';
+  body+='<p>'+(har
+    ? cap(DAYS[occ.getDay()])+" "+fmtLong(occ)+" "+occ.getFullYear()+
+      (alder!==null&&alder>=0?", fyller "+alder+" år":"")+"."+(isRedDay(occ)?" Dagen faller på en rød dag.":"")
+    : "Sett en bursdag, så dukker personen opp i kalenderen og i nedtellingen under Mine.")+'</p>';
+  body+='<button class="primary" id="kDate">'+(har?"Endre bursdag":"Sett bursdag")+'</button>';
+  if(har) body+='<button class="linkbtn" id="kIcs" style="margin-top:10px">Legg i telefonkalenderen</button>';
+  if(ev.tel){
+    const nr=ev.tel.replace(/[^0-9+()#*-]/g,"");
+    body+='<div class="btnrow"><a class="linkbtn" href="tel:'+nr+'">Ring</a>'+
+          '<a class="linkbtn" href="sms:'+nr+'">Send melding</a></div>';
+  }
+  body+='<button class="danger" id="kDel">Slett kontakten</button>';
+  openSheet('<div class="k">Kontakt</div><div class="h">'+esc(ev.name)+'</div>',body);
+  document.getElementById("kDate").onclick=()=>evForm(ev);
+  const ics=document.getElementById("kIcs"); if(ics) ics.onclick=()=>{ downloadIcs([ev],ev.name); buzz(8); };
+  document.getElementById("kDel").onclick=()=>{
+    if(!confirm("Slette "+ev.name+" fra kontaktene?")) return;
+    evSave(evLoad().filter(x=>x.id!==ev.id));
+    closeSheet(); buzz(8); renderKontakter(); renderMine(); renderNow(); renderMonth();
+    toast("Kontakten er slettet.");
+  };
+}
 
 /* Skjema for ny eller eksisterende dag */
 function evForm(ev,prefill){
@@ -1036,26 +1136,29 @@ function evForm(ev,prefill){
   document.getElementById("evSave").onclick=()=>{
     const name=document.getElementById("evName").value.trim();
     const dv=document.getElementById("evDate").value;
-    if(!name||!dv){ toast("Fyll inn navn og dato."); return; }
-    const p=dv.split("-").map(Number);
+    const tel=document.getElementById("evTel").value.trim();
+    const erK=e.kilde==="kontakter"||!!tel;
+    if(!name){ toast("Fyll inn et navn."); return; }
+    if(!dv&&!erK){ toast("Velg en dato."); return; }
+    const p=dv?dv.split("-").map(Number):null;
     const useYear=document.getElementById("evYear").value==="1";
     const list=evLoad().filter(x=>x.id!==e.id);
     list.push({
-      id:e.id, name:name,
+      id:e.id, name:name, kilde:e.kilde,
       type:document.getElementById("evType").value,
-      day:p[2], month:p[1], year:useYear?p[0]:null,
+      day:p?p[2]:null, month:p?p[1]:null, year:p&&useYear?p[0]:null,
       arlig:document.getElementById("evRep").value==="1",
-      tel:document.getElementById("evTel").value.trim(),
+      tel:tel,
       remind:Number(document.getElementById("evRem").value)
     });
     evSave(list); closeSheet(); buzz(8);
-    renderMine(); renderNow(); renderMonth();
+    renderMine(); renderKontakter(); renderNow(); renderMonth();
     toast(isNew?"Dagen er lagret.":"Endringen er lagret.");
   };
   if(!isNew) document.getElementById("evDel").onclick=()=>{
     if(!confirm("Slette "+e.name+"?")) return;
     evSave(evLoad().filter(x=>x.id!==e.id));
-    closeSheet(); buzz(8); renderMine(); renderNow(); renderMonth();
+    closeSheet(); buzz(8); renderMine(); renderKontakter(); renderNow(); renderMonth();
     toast("Dagen er slettet.");
   };
 }
@@ -1203,7 +1306,7 @@ document.getElementById("fromContacts").onclick=async()=>{
 
     if(rene.length===1){
       buzz(8);
-      evForm(null,{name:rene[0].navn||rene[0].tlf,tel:rene[0].tlf});
+      evForm(null,{name:rene[0].navn||rene[0].tlf,tel:rene[0].tlf,kilde:"kontakter"});
       toast("Fyll inn bursdagen, den følger ikke med fra kontaktlisten.");
       return;
     }
@@ -1215,16 +1318,18 @@ document.getElementById("fromContacts").onclick=async()=>{
       const nokkel=(k.navn||"").toLowerCase()+"|"+k.tlf;
       if(finnes.has(nokkel)) return;
       finnes.add(nokkel);
-      list.push({id:"e"+Date.now()+"_"+i,name:k.navn||k.tlf,type:"bursdag",
+      list.push({id:"e"+Date.now()+"_"+i,name:k.navn||k.tlf,type:"bursdag",kilde:"kontakter",
                  day:null,month:null,year:null,arlig:true,remind:1,tel:k.tlf});
       lagt++;
     });
-    evSave(list); buzz(8); renderMine(); renderNow(); renderMonth();
-    goto(ORDER.indexOf("mine"),0);
+    evSave(list); buzz(8); renderMine(); renderKontakter(); renderNow(); renderMonth();
+    goto(ORDER.indexOf("kontakter"),0);
     toast(lagt?("La til "+lagt+" kontakter. Sett bursdag på hver av dem."):"Kontaktene lå der fra før.");
   }catch(err){ toast("Kontaktlisten kunne ikke åpnes."); }
 };
 document.getElementById("notifBtn").onclick=askNotif;
+document.getElementById("addPerson").onclick=()=>{ evForm(null,{kilde:"kontakter"}); buzz(6); };
+document.getElementById("kSearch").oninput=renderKontakter;
 document.getElementById("icsAll").onclick=()=>downloadIcs(evKlare(),"mine-dager");
 document.getElementById("expJson").onclick=()=>{
   const list=evLoad();
@@ -1252,7 +1357,7 @@ document.getElementById("impFile").onchange=e=>{
 };
 
 /* ── Navigasjon og sveip ──────────────────────────────── */
-const ORDER=["na","kal","mine","beregn","om"];
+const ORDER=["na","kal","mine","kontakter","beregn","om"];
 let vi=Math.max(0,ORDER.indexOf(store.get("tab","na")));
 function goto(i,dir){
   i=Math.max(0,Math.min(ORDER.length-1,i));
@@ -1325,7 +1430,7 @@ window.addEventListener("appinstalled",()=>{ installBtn.style.display="none"; })
   for(let i=0;i<4;i++){const y=t.getFullYear()+i;sel.innerHTML+='<option value="'+y+'">'+y+'</option>';}
   sel.onchange=renderBridges;
   document.getElementById("bBudget").onchange=renderBridges;
-  renderNow(); renderMonth(); renderMine(); renderRange(); renderAbout(); notifState(); setSunState(); goto(vi);
+  renderNow(); renderMonth(); renderMine(); renderKontakter(); renderRange(); renderAbout(); notifState(); setSunState(); goto(vi);
   setTimeout(()=>{ checkReminders(); registerPeriodic(); },1200);
 })();
 
@@ -1353,7 +1458,7 @@ if("serviceWorker" in navigator){
   });
 }
 document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden){ renderNow(); renderMonth(); renderMine(); checkReminders(); }
+  if(!document.hidden){ renderNow(); renderMonth(); renderMine(); renderKontakter(); checkReminders(); }
 });
 </script>
 </body>
