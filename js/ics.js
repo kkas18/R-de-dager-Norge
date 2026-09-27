@@ -5,7 +5,7 @@ import { holidaysOf, KIND_LABEL } from "./holidays.js";
 import { TYPES, hasDate, nextOccurrence } from "./people.js";
 
 export const escapeText = s => String(s)
-  .replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  .replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r\n|\r|\n/g, "\\n");
 
 /** Folds a content line at 75 octets, as the RFC requires, without splitting UTF-8 sequences. */
 export function fold(line) {

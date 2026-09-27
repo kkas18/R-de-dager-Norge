@@ -41,3 +41,7 @@ test("period calendar", () => {
   const ics = periodCalendar(b, { now });
   assert.match(ics, /SUMMARY:Fri: \d+ dager/);
 });
+
+test("a bare carriage return cannot start a new calendar line", () => {
+  assert.equal(escapeText("a\rBEGIN:VALARM"), "a\\nBEGIN:VALARM");
+});
