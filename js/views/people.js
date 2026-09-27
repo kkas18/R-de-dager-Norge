@@ -1,4 +1,5 @@
-// Personer: one list for birthdays, anniversaries and other days, with or without a date.
+// Personer: a birthday almanac. Everyone grouped by the month of their next day,
+// then those without a date, then one-time days that have passed.
 
 import { h, mount, $, haptic, downloadFile, slug } from "../dom.js";
 import { capitalize, formatFull, isoDate, parseIsoDate, relativeDays, daysBetween } from "../dates.js";
@@ -10,9 +11,8 @@ import {
 import { peopleCalendar } from "../ics.js";
 import { loadPeople, savePeople, findPerson, upsertPerson, removePeople, prefs } from "../store.js";
 import { openSheet, closeSheet, toast, undoable } from "../ui.js";
-import { personRow, setOpenPerson, today } from "./shared.js";
+import { almanac, personItem, setOpenPerson, today } from "./shared.js";
 
-let filter = "alle";
 let selecting = false;
 const selection = new Set();
 
@@ -28,12 +28,8 @@ export function exportIcs(list, label) {
 export function initPeople() {
   setOpenPerson(p => personSheet(findPerson(p.id) || p));
   $("#pSearch").addEventListener("input", renderPeople);
-  for (const btn of document.querySelectorAll("#pFilter button")) {
-    btn.addEventListener("click", () => { filter = btn.dataset.filter; renderPeople(); });
-  }
   $("#pSelect").addEventListener("click", () => setSelecting(!selecting));
   $("#pAdd").addEventListener("click", () => personForm(null));
-  $("#pWizard").addEventListener("click", wizard);
   $("#selIcs").addEventListener("click", () => {
     exportIcs(loadPeople().filter(p => selection.has(p.id)), "utvalg");
     setSelecting(false);
@@ -45,7 +41,6 @@ export function initPeople() {
     haptic(10);
     undoable(n === 1 ? "Slettet." : n + " slettet.", undo);
   });
-
   if ("contacts" in navigator && "ContactsManager" in window) {
     $("#pContacts").hidden = false;
     $("#pContacts").addEventListener("click", importContacts);
@@ -57,7 +52,7 @@ export function leavePeople() { if (selecting) setSelecting(false); }
 function setSelecting(on) {
   selecting = on;
   selection.clear();
-  $("#pSelect").textContent = on ? "Ferdig" : "Velg";
+  $("#pSelect").textContent = on ? "Ferdig" : "Velg flere";
   renderPeople();
 }
 
@@ -66,57 +61,53 @@ function toggleSelected(id) {
   renderPeople();
 }
 
-function matches(p, q) {
-  if (!q) return true;
-  return p.name.toLowerCase().includes(q) || p.tel.replace(/\s/g, "").includes(q.replace(/\s/g, ""));
+const matches = (p, q) => !q || p.name.toLowerCase().includes(q) ||
+  p.tel.replace(/\s/g, "").includes(q.replace(/\s/g, ""));
+
+function group(title, action, rows) {
+  return h("section", { class: "section" },
+    h("div", { class: "section-head" }, h("h3", null, title), action),
+    rows);
 }
 
 export function renderPeople() {
   const t = today();
   const all = loadPeople();
-  const q = $("#pSearch").value.trim().toLowerCase();
-  const undated = all.filter(p => !hasDate(p));
-  const counts = { alle: all.length, med: all.length - undated.length, uten: undated.length };
-  for (const btn of document.querySelectorAll("#pFilter button")) {
-    btn.setAttribute("aria-pressed", String(btn.dataset.filter === filter));
-    mount(btn, btn.dataset.label, h("span", { class: "count" }, counts[btn.dataset.filter]));
-  }
-  $("#pFilter").hidden = !all.length;
+  const typed = $("#pSearch").value.trim();
+  const q = typed.toLowerCase();
   $("#pSearchWrap").hidden = all.length < 6;
   $("#pSelect").hidden = !all.length;
-  $("#pWizard").hidden = !undated.length || selecting;
-  $("#pWizard").textContent = "Sett dato for " + undated.length + " " + (undated.length === 1 ? "person" : "personer");
 
-  const shown = all.filter(p => matches(p, q) && (filter === "alle" || (filter === "med") === hasDate(p)));
-  const groups = [
-    ["Kommende", shown.filter(p => hasDate(p) && !isPast(p, t))],
-    ["Uten dato", shown.filter(p => !hasDate(p))],
-    ["Passert", shown.filter(p => isPast(p, t))]
-  ];
-
+  const shown = all.filter(p => matches(p, q)).sort(byNextThenName(t));
   const open = p => selecting ? toggleSelected(p.id) : personSheet(p);
-  const sections = groups.filter(([, list]) => list.length).map(([title, list]) =>
-    h("section", { class: "section" },
-      h("h3", { class: "eyebrow section-label" }, title),
-      h("div", { class: "list" }, list.sort(byNextThenName(t)).map(p => {
-        const row = personRow(p, open, {
-          from: t, leading: selecting ? "check" : (hasDate(p) ? "date" : "avatar"),
-          selected: selecting ? selection.has(p.id) : null
-        });
-        addLongPress(row, p.id);
-        return row;
-      }))));
+  const opts = p => ({ from: t, selected: selecting ? selection.has(p.id) : null });
+  const withLongPress = item => { addLongPress(item.row, item.row.dataset.id); return item; };
 
-  let empty = null;
-  if (!all.length) empty = h("p", { class: "lede" }, "Legg inn bursdager og merkedager du vil huske.");
-  else if (!shown.length) empty = h("p", { class: "lede" }, "Ingen treff.");
-  mount($("#pList"), empty, sections);
+  const upcomingPeople = shown.filter(p => hasDate(p) && !isPast(p, t));
+  const undated = shown.filter(p => !hasDate(p));
+  const past = shown.filter(p => isPast(p, t));
+
+  let content;
+  if (!all.length) {
+    content = h("p", { class: "lede" }, "Legg inn bursdager og merkedager du vil huske. De dukker opp i kalenderen og på forsiden.");
+  } else if (!shown.length) {
+    content = h("p", { class: "alm-empty" }, "Ingen treff på «" + typed + "».");
+  } else {
+    content = [
+      upcomingPeople.length ? almanac(upcomingPeople.map(p => withLongPress(personItem(p, open, opts(p)))), t) : null,
+      undated.length ? group("Uten dato",
+        selecting ? null : h("button", { class: "link red", type: "button", onclick: wizard }, "Sett datoer"),
+        undated.map(p => withLongPress(personItem(p, open, opts(p))).row)) : null,
+      past.length ? group("Passert", null, past.map(p => withLongPress(personItem(p, open, opts(p))).row)) : null
+    ];
+  }
+  mount($("#pList"), content);
 
   $("#selBar").hidden = !(selecting && selection.size);
   const datedSel = all.filter(p => selection.has(p.id) && hasDate(p)).length;
   $("#selIcs").textContent = "Til kalender" + (datedSel ? " (" + datedSel + ")" : "");
   $("#selIcs").disabled = !datedSel;
-  $("#selDel").textContent = "Slett (" + selection.size + ")";
+  $("#selDel").textContent = "Slett " + selection.size;
 }
 
 function addLongPress(row, id) {
@@ -144,30 +135,24 @@ function personSheet(p) {
   const body = [];
   if (hasDate(p)) {
     const occ = nextOccurrence(p, t);
-    const gap = daysBetween(t, occ);
     const n = yearsAt(p, occ);
-    body.push(h("p", { class: "facts" },
-      h("span", { class: "is-red" }, capitalize(relativeDays(gap))),
-      h("span", null, p.arlig ? "Hvert år" : "Én gang"),
-      reminderLabel(p.remind) ? h("span", null, capitalize(reminderLabel(p.remind))) : null));
+    const facts = [capitalize(relativeDays(daysBetween(t, occ))), p.arlig ? "hvert år" : "én gang", reminderLabel(p.remind)]
+      .filter(Boolean).join(" · ");
+    body.push(h("p", { class: "facts" }, facts));
     body.push(h("p", null, capitalize(formatFull(occ)) + "." +
-      (n !== null ? (p.type === "bursdag" ? " Fyller " + n + " år." : " " + n + " år.") : "") +
-      (isRedDay(occ) ? " Faller på en rød dag." : "")));
+      (n !== null ? (p.type === "bursdag" ? " " + p.name.split(" ")[0] + " fyller " + n + " år." : " Det er " + n + " år.") : "") +
+      (isRedDay(occ) ? " Dagen er rød." : "")));
   } else {
-    body.push(h("p", { class: "muted" }, "Ingen dato ennå. Sett en, så dukker dagen opp i kalenderen og på forsiden."));
+    body.push(h("p", { class: "muted" }, "Ingen dato ennå. Sett en, så kommer dagen i kalenderen og på forsiden."));
   }
+  const links = [];
   if (p.tel) {
     const nr = p.tel.replace(/[^0-9+#*]/g, "");
-    body.push(h("div", { class: "btn-row" },
-      h("a", { class: "btn btn-secondary", href: "tel:" + nr }, "Ring"),
-      h("a", { class: "btn btn-secondary", href: "sms:" + nr }, "Send melding")));
+    links.push(h("a", { class: "link", href: "tel:" + nr }, "Ring"), h("a", { class: "link", href: "sms:" + nr }, "Send melding"));
   }
-  body.push(h("div", { class: "btn-row" },
-    hasDate(p) ? h("button", { class: "btn btn-secondary", type: "button", onclick: () => exportIcs([p], p.name) }, "Legg i kalender") : null,
-    h("button", { class: "btn btn-primary", type: "button", "data-autofocus": true, onclick: () => personForm(p) },
-      hasDate(p) ? "Endre" : "Sett dato")));
-  body.push(h("button", {
-    class: "btn btn-danger btn-block", type: "button",
+  if (hasDate(p)) links.push(h("button", { class: "link", type: "button", onclick: () => exportIcs([p], p.name) }, "Legg i kalender"));
+  links.push(h("button", {
+    class: "link red", type: "button",
     onclick: () => {
       const undo = removePeople([p.id]);
       closeSheet();
@@ -175,44 +160,49 @@ function personSheet(p) {
       undoable(p.name + " er slettet.", undo);
     }
   }, "Slett"));
+  body.push(h("div", { class: "link-row" }, links));
+  body.push(h("button", { class: "btn-primary btn-block", type: "button", "data-autofocus": true, onclick: () => personForm(p) },
+    hasDate(p) ? "Endre" : "Sett dato"));
   openSheet({ eyebrow: TYPES[p.type], title: p.name, body });
 }
 
-/* ── Add / edit form ──────────────────────────────────────── */
-function field(label, id, control) {
-  return h("div", { class: "field" }, h("label", { for: id }, label), control);
-}
-
-function select(id, options, value) {
-  return h("select", { id }, options.map(([v, l]) => h("option", { value: String(v), selected: String(v) === String(value) || null }, l)));
-}
+/* ── Add / edit form: labels above, checkboxes for yes/no ──── */
+const fld = (label, id, control) => h("div", { class: "fld" }, h("label", { for: id }, label), control);
+const select = (id, options, value) =>
+  h("select", { id }, options.map(([v, l]) => h("option", { value: String(v), selected: String(v) === String(value) || null }, l)));
+const check = (id, label, checked) =>
+  h("label", { class: "check-row" }, h("input", { type: "checkbox", id, checked: !!checked }), label);
 
 function personForm(existing, prefill = {}) {
   const isNew = !existing;
   const p = existing || normalizePerson({ id: newId(), name: prefill.name || prefill.tel || "Ny", type: "bursdag", remind: 1, ...prefill });
   const dateValue = hasDate(p) ? isoDate(new Date(p.year || 2000, p.month - 1, p.day)) : "";
   const form = h("form", { class: "form", id: "personForm", novalidate: true },
-    field("Navn", "fName", h("input", { id: "fName", type: "text", autocomplete: "name", required: true, value: isNew && !prefill.name && !prefill.tel ? "" : p.name })),
-    field("Type", "fType", select("fType", Object.entries(TYPES), p.type)),
-    field("Dato", "fDate", h("input", { id: "fDate", type: "date", value: dateValue })),
-    field("Årstall", "fYear", select("fYear", [["1", "Vis alder og år"], ["0", "Ikke kjent"]], p.year || isNew ? "1" : "0")),
-    field("Gjentas", "fRepeat", select("fRepeat", [["1", "Hvert år"], ["0", "Bare én gang"]], p.arlig ? "1" : "0")),
-    field("Varsel", "fRemind", select("fRemind", REMINDER_OPTIONS, p.remind)),
-    field("Telefon", "fTel", h("input", { id: "fTel", type: "tel", autocomplete: "tel", value: p.tel, placeholder: "Valgfritt" })));
+    fld("Navn", "fName", h("input", { id: "fName", type: "text", autocomplete: "name", required: true, value: isNew && !prefill.name && !prefill.tel ? "" : p.name })),
+    h("div", { class: "fld-row" },
+      fld("Dato", "fDate", h("input", { id: "fDate", type: "date", value: dateValue })),
+      fld("Hva slags dag", "fType", select("fType", Object.entries(TYPES), p.type))),
+    fld("Varsel", "fRemind", select("fRemind", REMINDER_OPTIONS, p.remind)),
+    h("div", null,
+      check("fRepeat", "Gjentas hvert år", p.arlig),
+      check("fYear", "Vis alder eller antall år", isNew || p.year !== null)),
+    h("details", { class: "more-fields", open: p.tel ? true : null },
+      h("summary", null, "Telefonnummer"),
+      h("div", { class: "form" }, fld("Telefon", "fTel", h("input", { id: "fTel", type: "tel", autocomplete: "tel", value: p.tel, placeholder: "Valgfritt" })))));
 
   const save = e => {
     e.preventDefault();
     const name = $("#fName").value.trim();
     if (!name) { toast("Skriv inn et navn."); $("#fName").focus(); return; }
     const dt = parseIsoDate($("#fDate").value);
-    const once = $("#fRepeat").value === "0";
-    if (once && !dt) { toast("En dag som skjer én gang trenger en dato."); return; }
+    const once = !$("#fRepeat").checked;
+    if (once && !dt) { toast("En dag som skjer én gang, trenger en dato."); return; }
     upsertPerson(normalizePerson({
       ...p, name,
       type: $("#fType").value,
       day: dt ? dt.getDate() : null, month: dt ? dt.getMonth() + 1 : null,
       // One-time days always keep their year; yearly days keep it only for age.
-      year: dt && (once || $("#fYear").value === "1") ? dt.getFullYear() : null,
+      year: dt && (once || $("#fYear").checked) ? dt.getFullYear() : null,
       arlig: !once,
       remind: Number($("#fRemind").value),
       tel: $("#fTel").value
@@ -223,8 +213,9 @@ function personForm(existing, prefill = {}) {
   };
   form.addEventListener("submit", save);
   openSheet({
-    eyebrow: isNew ? "Ny" : "Endre", title: isNew ? "Legg til" : p.name,
-    body: [form, h("button", { class: "btn btn-primary btn-block", type: "submit", form: "personForm" }, "Lagre")]
+    eyebrow: isNew ? "Ny dag" : "Endre",
+    title: isNew ? "Hvem eller hva?" : p.name,
+    body: [form, h("button", { class: "btn-primary btn-block", type: "submit", form: "personForm" }, "Lagre")]
   });
 }
 
@@ -237,8 +228,8 @@ function wizard() {
     if (!p) { closeSheet(); toast(done ? done + " " + (done === 1 ? "dato" : "datoer") + " lagt inn." : "Ingen datoer ble satt."); return; }
     const next = () => { i++; step(); };
     const form = h("form", { class: "form", id: "wizForm" },
-      field("Bursdag", "wDate", h("input", { id: "wDate", type: "date" })),
-      field("Varsel", "wRemind", select("wRemind", REMINDER_OPTIONS, 1)));
+      fld("Bursdag", "wDate", h("input", { id: "wDate", type: "date" })),
+      fld("Varsel", "wRemind", select("wRemind", REMINDER_OPTIONS, 1)));
     form.addEventListener("submit", e => {
       e.preventDefault();
       const dt = parseIsoDate($("#wDate").value);
@@ -250,10 +241,9 @@ function wizard() {
     });
     openSheet({
       eyebrow: (i + 1) + " av " + queue.length, title: p.name,
-      body: [p.tel ? h("p", { class: "muted" }, p.tel) : null, form,
-        h("div", { class: "btn-row" },
-          h("button", { class: "btn btn-secondary", type: "button", onclick: next }, "Hopp over"),
-          h("button", { class: "btn btn-primary", type: "submit", form: "wizForm" }, "Lagre og neste"))]
+      body: [p.tel ? h("p", { class: "facts" }, p.tel) : null, form,
+        h("button", { class: "btn-primary btn-block", type: "submit", form: "wizForm" }, "Lagre og neste"),
+        h("button", { class: "link", type: "button", onclick: next }, "Hopp over")]
     });
   };
   step();
@@ -278,11 +268,9 @@ async function importContacts() {
     }
     const { list, added } = mergeImport(loadPeople(),
       clean.map(c => ({ ...c, id: newId(), type: "bursdag", kilde: "kontakter", remind: 1 })));
-    filter = "uten";
     savePeople(list);
-    toast(added ? added + " lagt til. Sett datoene med «Sett dato»." : "Alle lå der fra før.");
+    toast(added ? added + " lagt til. Sett datoene under «Uten dato»." : "Alle lå der fra før.");
   } catch {
     toast("Kontaktlisten kunne ikke åpnes.");
   }
 }
-

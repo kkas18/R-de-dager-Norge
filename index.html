@@ -6,8 +6,8 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-dHYClxZCkvFn4UTaOEHZL0q8JxSakD1RwVzeg+XvUng='; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Røde dager</title>
 <meta name="description" content="Norske røde dager, inneklemte dager og merkedager. Virker uten nett.">
-<meta name="theme-color" content="#F6F5F1" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0F0F10" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F1E8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12110F" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,123 +16,124 @@
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preload" href="fonts/source-serif-4-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/source-sans-3-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/app.css">
 <script>(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}})();</script>
 <script type="module" src="js/app.js"></script>
 </head>
 <body>
 
-<header class="topbar" data-app-root>
-  <h1><a href="#idag">Røde dager</a></h1>
-  <button class="icon-btn" id="openSettings" type="button" aria-label="Innstillinger og om appen">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
-  </button>
+<header class="masthead" data-app-root>
+  <div class="masthead-row">
+    <h1><a class="brand" href="#idag">Røde dager</a></h1>
+    <p class="brand-date" id="brandDate"></p>
+    <button class="icon-btn" id="openSettings" type="button" aria-label="Innstillinger og om appen">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+    </button>
+  </div>
 </header>
 
 <main id="main" data-app-root>
 
   <!-- I DAG -->
   <section class="view" id="v-idag" role="tabpanel" aria-labelledby="tab-idag" tabindex="-1">
-    <div class="hero" id="hero" aria-live="polite"></div>
+    <h2 class="visually-hidden">I dag</h2>
+    <article class="leaf" id="leaf" aria-live="polite"></article>
+    <div id="tips"></div>
     <div class="week" id="week" role="group" aria-label="Denne uken"></div>
-    <div class="insights" id="insights"></div>
+
     <section class="section" aria-labelledby="comingHead">
-      <div class="section-head"><h2 id="comingHead">Kommende</h2></div>
+      <div class="section-head"><h3 id="comingHead">Kommende</h3><span class="kicker" id="comingKicker"></span></div>
       <div id="comingList"></div>
     </section>
+
     <section class="section" id="peopleSoon" aria-labelledby="soonHead" hidden>
-      <div class="section-head"><h2 id="soonHead">Dine neste dager</h2><a class="btn btn-quiet" href="#personer">Se alle</a></div>
+      <div class="section-head"><h3 id="soonHead">Dine neste dager</h3><a class="link" href="#personer">Alle</a></div>
       <div id="peopleSoonList"></div>
     </section>
   </section>
 
   <!-- KALENDER -->
   <section class="view" id="v-kalender" role="tabpanel" aria-labelledby="tab-kalender" tabindex="-1">
-    <div class="cal-bar">
-      <h2 class="visually-hidden">Kalender</h2>
-      <div class="seg" id="calMode" role="group" aria-label="Visning">
-        <button type="button" data-mode="month" aria-pressed="true">Måned</button>
-        <button type="button" data-mode="year" aria-pressed="false">År</button>
-      </div>
+    <h2 class="visually-hidden">Kalender</h2>
+    <div class="tabs" id="calMode" role="group" aria-label="Visning">
+      <button type="button" data-mode="month" aria-pressed="true">Måned</button>
+      <button type="button" data-mode="year" aria-pressed="false">År</button>
     </div>
 
     <div id="monthView">
       <div class="cal-head">
-        <button class="icon-btn" id="calPrev" type="button" aria-label="Forrige måned"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg></button>
-        <button class="cal-title" id="calTitle" type="button" aria-haspopup="dialog" aria-label="Velg måned og år"></button>
-        <button class="icon-btn" id="calNext" type="button" aria-label="Neste måned"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button class="cal-title" id="calTitle" type="button" aria-haspopup="dialog"></button>
+        <button class="icon-btn" id="calPrev" type="button" aria-label="Forrige måned"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button class="icon-btn" id="calNext" type="button" aria-label="Neste måned"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <div class="grid" id="grid" aria-live="polite"></div>
-      <p class="legend"><span><i></i>Helligdag</span><span><i class="other"></i>Merkedag eller dine dager</span></p>
+      <p class="legend" aria-hidden="true"><span><i class="k-mark"></i>Helligdag</span><span><i class="k-mark grey"></i>Merkedag</span><span><i class="k-own"></i>Dine dager</span><span><i class="k-ring"></i>I dag</span></p>
       <section class="section" aria-labelledby="monthListHead">
-        <div class="section-head"><h2 id="monthListHead">Merkedager</h2></div>
+        <div class="section-head"><h3 id="monthListHead">Merkedager</h3></div>
         <div id="monthList"></div>
       </section>
-      <p class="lede" id="yearNote"></p>
-      <button class="btn btn-secondary btn-block section-gap" id="yearAllBtn" type="button">Alle merkedager</button>
+      <p class="cal-note" id="yearNote"></p>
+      <button class="link" id="yearAllBtn" type="button">Alle merkedager</button>
     </div>
 
     <div id="yearView" hidden>
       <div class="cal-head">
-        <button class="icon-btn" id="yearPrev" type="button" aria-label="Forrige år"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg></button>
-        <h2 class="cal-title" id="yearTitle"></h2>
-        <button class="icon-btn" id="yearNext" type="button" aria-label="Neste år"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
+        <h3 class="cal-title" id="yearTitle"></h3>
+        <button class="icon-btn" id="yearPrev" type="button" aria-label="Forrige år"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button class="icon-btn" id="yearNext" type="button" aria-label="Neste år"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <div class="year" id="yearGrid"></div>
-      <p class="legend"><span><i></i>Rød dag</span><span><i class="wknd"></i>Lørdag</span></p>
     </div>
   </section>
 
   <!-- PERSONER -->
   <section class="view" id="v-personer" role="tabpanel" aria-labelledby="tab-personer" tabindex="-1">
-    <div class="section-head">
-      <h2>Personer og dager</h2>
-      <button class="btn btn-quiet" id="pSelect" type="button">Velg</button>
+    <div class="page-head">
+      <h2 class="page-title">Personer</h2>
+      <button class="btn-primary" id="pAdd" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>Ny</button>
     </div>
-    <div class="search" id="pSearchWrap">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.4"/><path d="M15.6 15.6 20 20"/></svg>
+    <div class="search" id="pSearchWrap" hidden>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.4"/><path d="M15.6 15.6 20 20"/></svg>
       <input type="search" id="pSearch" placeholder="Søk i navn eller nummer" aria-label="Søk i navn eller nummer" autocomplete="off">
     </div>
-    <div class="seg section-gap" id="pFilter" role="group" aria-label="Vis">
-      <button type="button" data-filter="alle" data-label="Alle" aria-pressed="true">Alle</button>
-      <button type="button" data-filter="med" data-label="Med dato" aria-pressed="false">Med dato</button>
-      <button type="button" data-filter="uten" data-label="Uten dato" aria-pressed="false">Uten dato</button>
-    </div>
-    <button class="btn btn-secondary btn-block section-gap" id="pWizard" type="button" hidden></button>
     <div id="pList"></div>
-    <div class="btn-row section-gap-lg">
-      <button class="btn btn-primary" id="pAdd" type="button">Legg til</button>
-      <button class="btn btn-secondary" id="pContacts" type="button" hidden>Hent fra kontakter</button>
+    <div class="link-row more" id="pActions">
+      <button class="link" id="pSelect" type="button">Velg flere</button>
+      <button class="link" id="pContacts" type="button" hidden>Hent fra kontakter</button>
     </div>
   </section>
 
   <!-- PLANLEGG -->
   <section class="view" id="v-planlegg" role="tabpanel" aria-labelledby="tab-planlegg" tabindex="-1">
     <h2 class="visually-hidden">Planlegg</h2>
-    <div class="seg" id="planMode" role="group" aria-label="Verktøy">
+    <div class="tabs" id="planMode" role="group" aria-label="Verktøy">
       <button type="button" data-mode="bridges" aria-pressed="true">Inneklemte dager</button>
       <button type="button" data-mode="range" aria-pressed="false">Virkedager</button>
     </div>
 
     <div id="planBridges">
-      <div class="form section-gap">
-        <div class="field"><label for="bYear">År</label><select id="bYear"></select></div>
-        <div class="field"><label for="bMax">Feriedager per forslag</label><select id="bMax">
-          <option value="1">Inntil 1</option><option value="2">Inntil 2</option><option value="3">Inntil 3</option>
-          <option value="4">Inntil 4</option><option value="5">Inntil 5</option><option value="8">Inntil 8</option>
-        </select></div>
-        <div class="field"><label for="bTotal">Feriedager du har</label><input id="bTotal" type="number" inputmode="numeric" min="0" max="99"></div>
-      </div>
-      <div class="budget" id="budget" aria-live="polite"></div>
-      <p class="lede" id="plannedDays" hidden></p>
-      <p class="legend"><span><i class="hol"></i>Helligdag</span><span><i class="wknd"></i>Helg</span><span><i class="vac"></i>Feriedag</span></p>
-      <div class="section-gap" id="planList"></div>
+      <p class="sentence">
+        Forslag for <label class="visually-hidden" for="bYear">År</label><select class="inline-select" id="bYear"></select>
+        med inntil <label class="visually-hidden" for="bMax">Feriedager per forslag</label><select class="inline-select" id="bMax">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="8">8</option>
+        </select> feriedager.
+      </p>
+      <p class="sentence" id="budget" aria-live="polite">
+        Du har <label class="visually-hidden" for="bTotal">Feriedager du har</label><input class="inline-input" id="bTotal" type="number" inputmode="numeric" min="0" max="99">
+        feriedager. <span id="budgetText"></span>
+      </p>
+      <p class="small muted" id="plannedDays" hidden></p>
+      <p class="legend" aria-hidden="true"><span><i class="k-mark"></i>Rødt tall: helligdag</span><span><i class="k-ring"></i>Ring: du tar fri</span></p>
+      <div id="planList"></div>
     </div>
 
     <div id="planRange" hidden>
-      <div class="form section-gap">
-        <div class="field"><label for="rFrom">Fra og med</label><input type="date" id="rFrom"></div>
-        <div class="field"><label for="rTo">Til og med</label><input type="date" id="rTo"></div>
+      <div class="fld-row">
+        <div class="fld"><label for="rFrom">Fra og med</label><input type="date" id="rFrom"></div>
+        <div class="fld"><label for="rTo">Til og med</label><input type="date" id="rTo"></div>
       </div>
       <div class="stats" id="rangeOut" aria-live="polite"></div>
       <div id="rangeHolidays"></div>
@@ -141,92 +142,84 @@
 
   <!-- INNSTILLINGER OG OM -->
   <section class="view" id="v-om" aria-labelledby="omHead" tabindex="-1">
-    <button class="back" id="settingsBack" type="button"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>Tilbake</button>
-    <h2 class="hero-title" id="omHead">Innstillinger</h2>
+    <button class="back" id="settingsBack" type="button"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>Tilbake</button>
+    <h2 class="page-title" id="omHead">Innstillinger</h2>
 
     <section class="section" aria-labelledby="sViewHead">
-      <div class="section-head"><h2 id="sViewHead">Visning</h2></div>
-      <div class="form">
-        <div class="field"><label for="sTheme">Tema</label><select id="sTheme">
-          <option value="system">Som telefonen</option><option value="light">Lyst</option><option value="dark">Mørkt</option>
-        </select></div>
-        <div class="field"><label for="sSunday">Nedtellingen viser</label><select id="sSunday">
-          <option value="av">Neste helligdag</option><option value="pa">Neste røde dag</option>
-        </select></div>
-      </div>
+      <div class="section-head"><h3 id="sViewHead">Visning</h3></div>
+      <div class="set-row"><label for="sTheme" class="t">Tema</label><select id="sTheme">
+        <option value="system">Som telefonen</option><option value="light">Lyst</option><option value="dark">Mørkt</option>
+      </select></div>
+      <div class="set-row"><label for="sSunday" class="t">Nedtellingen viser</label><select id="sSunday">
+        <option value="av">Neste helligdag</option><option value="pa">Neste røde dag</option>
+      </select></div>
     </section>
 
     <section class="section" aria-labelledby="sNotifyHead">
-      <div class="section-head"><h2 id="sNotifyHead">Varsler</h2></div>
-      <div class="form">
-        <div class="field"><label for="sAlarm">Alarm i kalenderen</label><select id="sAlarm">
-          <option value="7">Kl. 07.00</option><option value="8">Kl. 08.00</option><option value="9">Kl. 09.00</option>
-          <option value="10">Kl. 10.00</option><option value="12">Kl. 12.00</option><option value="18">Kl. 18.00</option>
-        </select></div>
-      </div>
-      <p class="lede" id="sNotifyStatus"></p>
-      <button class="btn btn-secondary btn-block section-gap" id="sNotify" type="button" hidden>Slå på varsler</button>
+      <div class="section-head"><h3 id="sNotifyHead">Varsler</h3></div>
+      <div class="set-row"><label for="sAlarm" class="t">Alarm i kalenderen</label><select id="sAlarm">
+        <option value="7">kl. 07.00</option><option value="8">kl. 08.00</option><option value="9">kl. 09.00</option>
+        <option value="10">kl. 10.00</option><option value="12">kl. 12.00</option><option value="18">kl. 18.00</option>
+      </select></div>
+      <p class="lede small" id="sNotifyStatus"></p>
+      <button class="link" id="sNotify" type="button" hidden>Slå på varsler</button>
     </section>
 
     <section class="section" aria-labelledby="sDataHead">
-      <div class="section-head"><h2 id="sDataHead">Kalender og data</h2></div>
-      <div class="list">
-        <a class="row row-wrap" id="sFeedSubscribe" href="helligdager.ics">
-          <span class="row-main"><span class="row-title">Abonner på helligdager</span><span class="row-sub">Røde dager 2020–2045, oppdateres selv</span></span>
-        </a>
-        <a class="row row-wrap" id="sFeedDownload" href="helligdager.ics" download="helligdager.ics">
-          <span class="row-main"><span class="row-title">Last ned helligdagene</span><span class="row-sub">Som fil, for Google Kalender og andre</span></span>
-        </a>
-        <button class="row row-wrap" id="sIcsAll" type="button">
-          <span class="row-main"><span class="row-title">Legg dine dager i kalenderen</span><span class="row-sub">Årlig gjentakelse og alarm</span></span>
-        </button>
-        <button class="row row-wrap" id="sBackup" type="button">
-          <span class="row-main"><span class="row-title">Ta sikkerhetskopi</span><span class="row-sub">Lagres som fil på telefonen</span></span>
-        </button>
-        <button class="row row-wrap" id="sRestore" type="button">
-          <span class="row-main"><span class="row-title">Hent inn sikkerhetskopi</span><span class="row-sub">Legger til det som mangler</span></span>
-        </button>
-      </div>
+      <div class="section-head"><h3 id="sDataHead">Kalender og data</h3></div>
+      <a class="set-row" id="sFeedSubscribe" href="helligdager.ics">
+        <span><span class="t">Abonner på helligdagene</span><span class="d">Røde dager 2020–2045, oppdateres selv</span></span><span class="arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="set-row" id="sFeedDownload" href="helligdager.ics" download="helligdager.ics">
+        <span><span class="t">Last ned helligdagene</span><span class="d">Som fil, for Google Kalender og andre</span></span><span class="arrow" aria-hidden="true">↓</span>
+      </a>
+      <button class="set-row" id="sIcsAll" type="button">
+        <span><span class="t">Legg dine dager i kalenderen</span><span class="d">Årlig gjentakelse og alarm</span></span><span class="arrow" aria-hidden="true">↓</span>
+      </button>
+      <button class="set-row" id="sBackup" type="button">
+        <span><span class="t">Ta sikkerhetskopi</span><span class="d">Lagres som fil på telefonen</span></span><span class="arrow" aria-hidden="true">↓</span>
+      </button>
+      <button class="set-row" id="sRestore" type="button">
+        <span><span class="t">Hent inn sikkerhetskopi</span><span class="d">Legger til det som mangler</span></span><span class="arrow" aria-hidden="true">↑</span>
+      </button>
       <input type="file" id="sRestoreFile" accept="application/json,.json" hidden>
-      <button class="btn btn-primary btn-block section-gap" id="sInstall" type="button" hidden>Installer appen</button>
+      <button class="btn-primary btn-block more" id="sInstall" type="button" hidden>Installer appen</button>
     </section>
 
     <section class="section" aria-labelledby="sAboutHead">
-      <div class="section-head"><h2 id="sAboutHead">Om</h2></div>
-      <div class="prose small">
+      <div class="section-head"><h3 id="sAboutHead">Om</h3></div>
+      <div class="prose small lede">
         <p>Røde dager er helligdagene i helligdagsloven, pluss 1. og 17. mai. Alle søndager er røde, men listene viser bare de navngitte dagene.</p>
-        <p>Påsken regnes ut med Meeus' formel, og de bevegelige dagene følger den. Julaften, påskeaften og nyttårsaften er ikke røde, og vises i grått.</p>
+        <p>Påsken regnes ut med Meeus' formel, og de bevegelige dagene følger den. Julaften, påskeaften og nyttårsaften er ikke røde, og står i grått.</p>
         <p>Alt regnes ut på telefonen. Ingenting sendes noe sted, og dine dager lagres bare her.</p>
-        <p class="muted">Kilder: <a href="https://lovdata.no/dokument/NL/lov/1995-02-24-12" rel="noopener">helligdagsloven</a> og <a href="https://lovdata.no/dokument/NL/lov/1947-04-26-1" rel="noopener">lov om 1. og 17. mai</a>.</p>
+        <p>Kilder: <a href="https://lovdata.no/dokument/NL/lov/1995-02-24-12" rel="noopener">helligdagsloven</a> og <a href="https://lovdata.no/dokument/NL/lov/1947-04-26-1" rel="noopener">lov om 1. og 17. mai</a>.</p>
       </div>
       <p class="fineprint" id="version"></p>
+      <p class="colophon">Satt i Source Serif 4 og Source Sans 3.</p>
     </section>
   </section>
 </main>
 
 <nav class="tabbar" role="tablist" aria-label="Hovedmeny" data-app-root>
   <button role="tab" id="tab-idag" aria-controls="v-idag" data-view="idag" aria-selected="true" type="button">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 2.8v3.6M16 2.8v3.6M3.5 10h17"/><circle cx="12" cy="15" r="2" fill="currentColor" stroke="none"/></svg>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="3.5" width="14" height="17" rx="1"/><path d="M5 7.5h14"/><path d="M10 12.5h4M12 12.5v4.5"/></svg>
     I dag</button>
   <button role="tab" id="tab-kalender" aria-controls="v-kalender" data-view="kalender" aria-selected="false" tabindex="-1" type="button">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M3.5 9.5h17M9 9.5v11M14.8 9.5v11M3.5 15h17"/></svg>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="16" rx="1"/><path d="M3.5 9.5h17M8 2.8v3.4M16 2.8v3.4"/><path d="M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01" stroke-width="2.2"/></svg>
     Kalender</button>
   <button role="tab" id="tab-personer" aria-controls="v-personer" data-view="personer" aria-selected="false" tabindex="-1" type="button">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8.5" r="3.5"/><path d="M3 20c.5-3.3 3-5.3 6-5.3s5.5 2 6 5.3M15.5 5.2a3.3 3.3 0 0 1 0 6.6M17.5 14.9c2 .6 3.3 2.4 3.5 5.1"/></svg>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.7-3.6 3.6-5.6 7-5.6s6.3 2 7 5.6"/></svg>
     Personer</button>
   <button role="tab" id="tab-planlegg" aria-controls="v-planlegg" data-view="planlegg" aria-selected="false" tabindex="-1" type="button">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 18.5h16"/><rect x="5" y="11" width="3.2" height="5" rx="1"/><rect x="10.4" y="7" width="3.2" height="9" rx="1"/><rect x="15.8" y="4" width="3.2" height="12" rx="1"/></svg>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h16"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="3"/></svg>
     Planlegg</button>
 </nav>
 
-<button class="floating" id="todayBtn" type="button" hidden data-app-root>
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg>
-  I dag
-</button>
+<button class="floating" id="todayBtn" type="button" hidden data-app-root>Tilbake til i dag</button>
 
 <div class="selbar" id="selBar" hidden data-app-root>
-  <button class="btn btn-secondary" id="selIcs" type="button">Til kalender</button>
-  <button class="btn btn-danger" id="selDel" type="button">Slett</button>
+  <button class="link" id="selIcs" type="button">Til kalender</button>
+  <button class="link" id="selDel" type="button">Slett</button>
 </div>
 
 <div class="scrim" id="scrim"></div>
@@ -234,11 +227,11 @@
   <div class="sheet-grab" id="sheetGrab"><i></i></div>
   <div class="sheet-head">
     <div>
-      <p class="eyebrow" id="sheetEyebrow"></p>
+      <span class="kicker" id="sheetEyebrow"></span>
       <h2 id="sheetTitle" tabindex="-1"></h2>
     </div>
     <button class="icon-btn" id="sheetClose" type="button" aria-label="Lukk">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18"/></svg>
     </button>
   </div>
   <div class="sheet-body" id="sheetBody"></div>

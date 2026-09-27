@@ -90,3 +90,8 @@ test("upcoming holidays span the year boundary", () => {
 test("a Palm Sunday weekend is not a bridge", () => {
   assert.ok(!bridges(2026, 2).some(b => b.id === "2026-03-26_2026-03-29"));
 });
+
+test("long weekends know their season", () => {
+  assert.equal(nextLongWeekend(date(2026, 8, 27)).holiday.season, "jula");
+  assert.equal(nextLongWeekend(date(2027, 2, 1)).holiday.season, "påsken");
+});

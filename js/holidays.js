@@ -16,23 +16,24 @@ export function easter(y) {
 export const KIND_LABEL = { fixed: "Fast dato", easter: "Følger påsken", both: "Fast dato og påske" };
 
 // `inline` is the form used mid-sentence. Proper nouns keep their capital.
+// `season` names the long weekend a day belongs to ("påsken", "jula"), when it has one.
 // `sundayOnly` marks days that always fall on a Sunday, so they add no day off.
 function definitions(y) {
   const E = easter(y);
   return [
-    { d: date(y, 0, 1), name: "Første nyttårsdag", inline: "første nyttårsdag", red: true, kind: "fixed",
+    { d: date(y, 0, 1), name: "Første nyttårsdag", inline: "første nyttårsdag", season: "nyttår", red: true, kind: "fixed",
       note: "Første dag i året er helligdag etter lov om helligdager og helligdagsfred." },
-    { d: addDays(E, -7), name: "Palmesøndag", inline: "palmesøndag", red: true, kind: "easter", sundayOnly: true,
+    { d: addDays(E, -7), name: "Palmesøndag", inline: "palmesøndag", season: "påsken", red: true, kind: "easter", sundayOnly: true,
       note: "Søndagen før påske, og starten på den stille uke." },
-    { d: addDays(E, -3), name: "Skjærtorsdag", inline: "skjærtorsdag", red: true, kind: "easter",
+    { d: addDays(E, -3), name: "Skjærtorsdag", inline: "skjærtorsdag", season: "påsken", red: true, kind: "easter",
       note: "Torsdagen før påskedag. Skjær kommer av norrønt skír, som betyr ren." },
-    { d: addDays(E, -2), name: "Langfredag", inline: "langfredag", red: true, kind: "easter",
+    { d: addDays(E, -2), name: "Langfredag", inline: "langfredag", season: "påsken", red: true, kind: "easter",
       note: "Fredagen før påskedag. Har egne regler for salg og arrangementer." },
-    { d: addDays(E, -1), name: "Påskeaften", inline: "påskeaften", red: false, kind: "easter",
+    { d: addDays(E, -1), name: "Påskeaften", inline: "påskeaften", season: "påsken", red: false, kind: "easter",
       note: "Ikke rød dag, men fri eller halv dag i mange avtaler." },
-    { d: E, name: "Første påskedag", inline: "første påskedag", red: true, kind: "easter", sundayOnly: true,
+    { d: E, name: "Første påskedag", inline: "første påskedag", season: "påsken", red: true, kind: "easter", sundayOnly: true,
       note: "Første søndag etter første fullmåne på eller etter 21. mars." },
-    { d: addDays(E, 1), name: "Andre påskedag", inline: "andre påskedag", red: true, kind: "easter",
+    { d: addDays(E, 1), name: "Andre påskedag", inline: "andre påskedag", season: "påsken", red: true, kind: "easter",
       note: "Mandagen etter påskedag." },
     { d: date(y, 4, 1), name: "Første mai", inline: "første mai", red: true, kind: "fixed",
       note: "Arbeidernes dag. Offentlig høytidsdag." },
@@ -40,17 +41,17 @@ function definitions(y) {
       note: "Grunnlovsdagen. Offentlig høytidsdag siden 1947." },
     { d: addDays(E, 39), name: "Kristi himmelfartsdag", inline: "Kristi himmelfartsdag", red: true, kind: "easter",
       note: "Torsdag, 39 dager etter påskedag. Gir ofte en inneklemt fredag." },
-    { d: addDays(E, 49), name: "Første pinsedag", inline: "første pinsedag", red: true, kind: "easter", sundayOnly: true,
+    { d: addDays(E, 49), name: "Første pinsedag", inline: "første pinsedag", season: "pinsen", red: true, kind: "easter", sundayOnly: true,
       note: "Sju uker etter påskedag." },
-    { d: addDays(E, 50), name: "Andre pinsedag", inline: "andre pinsedag", red: true, kind: "easter",
+    { d: addDays(E, 50), name: "Andre pinsedag", inline: "andre pinsedag", season: "pinsen", red: true, kind: "easter",
       note: "Pinsemandag, alltid en mandag." },
-    { d: date(y, 11, 24), name: "Julaften", inline: "julaften", red: false, kind: "fixed",
+    { d: date(y, 11, 24), name: "Julaften", inline: "julaften", season: "jula", red: false, kind: "fixed",
       note: "Ikke rød dag. Mange tariffavtaler gir fri eller kort dag." },
-    { d: date(y, 11, 25), name: "Første juledag", inline: "første juledag", red: true, kind: "fixed",
+    { d: date(y, 11, 25), name: "Første juledag", inline: "første juledag", season: "jula", red: true, kind: "fixed",
       note: "Helligdag etter loven." },
-    { d: date(y, 11, 26), name: "Andre juledag", inline: "andre juledag", red: true, kind: "fixed",
+    { d: date(y, 11, 26), name: "Andre juledag", inline: "andre juledag", season: "jula", red: true, kind: "fixed",
       note: "Også kalt annen juledag eller stefansdagen." },
-    { d: date(y, 11, 31), name: "Nyttårsaften", inline: "nyttårsaften", red: false, kind: "fixed",
+    { d: date(y, 11, 31), name: "Nyttårsaften", inline: "nyttårsaften", season: "nyttår", red: false, kind: "fixed",
       note: "Ikke rød dag. Ofte halv arbeidsdag." }
   ].sort((a, b) => a.d - b.d);
 }

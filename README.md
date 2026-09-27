@@ -3,19 +3,25 @@
 Norske røde dager, inneklemte dager og merkedager. En installerbar webapp uten
 byggesteg og uten eksterne kall. Den virker uten nett.
 
+Designet er en lommealmanakk: papir, blekk og én rødfarge. Innholdet står i
+tabeller og setninger i stedet for kort og fliser, og rødt betyr alltid en rød
+dag. Bakgrunnen for utformingen står i `docs/REVISJON-2.md`.
+
 ## Sidene
 
-- **I dag** teller ned til neste helligdag og viser denne uken. Du ser også
-  neste langhelg, neste inneklemte dag, hva som kommer det neste året og dine
-  neste dager.
-- **Kalender** har månedsvisning med ukenummer og en stille forklaring under,
-  og årsvisning med alle tolv måneder. Sveip sidelengs for å bytte måned, og
+- **I dag** viser neste helligdag som et ark fra en rivblokk, med nedtellingen
+  som en setning. Under står neste langhelg og neste inneklemte dag, denne
+  uken, en almanakktabell over det som kommer, og dine neste dager.
+- **Kalender** har månedsvisning med ukenummer, der røde tall er røde dager og
+  en strek under tallet markerer navngitte dager. Årsvisningen er en trykt
+  årskalender med alle tolv måneder. Sveip sidelengs for å bytte måned, og
   trykk på månedsnavnet for å hoppe.
-- **Personer** samler bursdager, jubileer og andre dager, med eller uten dato.
-  Du kan søke og filtrere. «Sett dato» går gjennom alle uten dato, én om gangen.
+- **Personer** er en bursdagsalmanakk: alle gruppert på måneden for neste dag,
+  deretter de uten dato og de som er passert. Søket vises fra seks personer. «Sett dato» går gjennom alle uten dato, én om gangen.
   Langt trykk eller «Velg» gir flervalg. Sletting kan angres, i stedet for et
   spørsmål først.
-- **Planlegg** foreslår inneklemte dager. Forslag som ligger i fortiden vises
+- **Planlegg** foreslår inneklemte dager. Innstillingene er en setning
+  («Forslag for 2026 med inntil 3 feriedager»). Forslag som ligger i fortiden vises
   ikke. Hvert forslag har en ukestripe, og du kan planlegge perioder mot dine
   egne feriedager og legge dem i kalenderen. Her regner du også ut virkedager
   mellom to datoer.
@@ -39,7 +45,7 @@ byggesteg og uten eksterne kall. Den virker uten nett.
 | `js/version.js` | Versjonsnummeret, som bare står her |
 | `sw.js` | Service worker (ES-modul): app-skall per versjon, bakgrunnsvarsler |
 | `helligdager.ics` | Abonnerbar kalender for 2020–2045, generert |
-| `fonts/` | Source Serif 4 (SIL OFL), levert fra egen server |
+| `fonts/` | Source Serif 4 og Source Sans 3 (SIL OFL), levert fra egen server |
 | `icons/`, `screenshots/` | Ikoner og skjermbilder til installasjonen |
 | `tools/` | Generatorer for ikoner, kalenderfeed og skjermbilder |
 | `test/`, `e2e/` | Enhetstester (`node:test`) og Playwright-tester |
@@ -104,4 +110,4 @@ det virker appen fortsatt, men ikke uten nett.
 Appen dekker helligdagsloven og lov om 1. og 17. mai. Den tar ikke hensyn til
 turnus, lokale avtaler eller tariffavtaler om fri på jul- og nyttårsaften.
 
-Revisjonen som ligger bak versjon 2 finner du i `docs/REVISJON.md`.
+Revisjonene finner du i `docs/REVISJON.md` (versjon 2) og `docs/REVISJON-2.md` (versjon 3).

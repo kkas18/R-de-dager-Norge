@@ -1,66 +1,84 @@
-// Row builders and the day-detail sheet, shared by several views.
+// Almanac tables and the day sheet, shared by several views.
 
 import { h } from "../dom.js";
 import { openSheet } from "../ui.js";
 import {
-  MONTHS_SHORT, WEEKDAYS, capitalize, daysBetween, formatDayMonth, isoWeek, relativeDays, startOfDay, plural, MONTHS
+  MONTHS, WEEKDAYS, capitalize, daysBetween, formatDayMonth, isoWeek, relativeDays, startOfDay, plural
 } from "../dates.js";
 import { holidayOn, isRedDay, upcomingHolidays, KIND_LABEL } from "../holidays.js";
-import { occursOn, describe, nextOccurrence, initials, hasDate } from "../people.js";
+import { occursOn, describe, nextOccurrence, hasDate } from "../people.js";
 import { loadPeople } from "../store.js";
 
 export const today = () => startOfDay();
 
-/** "om 12 dager", with "i dag"/"i morgen"; past dates read "passert". */
-export function tail(dt, from = today()) {
+/** "om 12 dager" close by, the weekday further out, "passert" behind us. */
+export function when(dt, from = today()) {
   const n = daysBetween(from, dt);
-  return n < 0 ? "passert" : relativeDays(n);
+  if (n < 0) return "passert";
+  return n <= 45 ? relativeDays(n) : WEEKDAYS[dt.getDay()];
 }
 
-function dateBlock(dt) {
-  return h("span", { class: "row-date", "aria-hidden": "true" },
-    h("span", { class: "d" }, dt.getDate()), h("span", { class: "m" }, MONTHS_SHORT[dt.getMonth()]));
+/** Groups dated rows under italic month headings, the way an almanac does. */
+export function almanac(items, from = today(), emptyText = "") {
+  if (!items.length) return emptyText ? h("p", { class: "alm-empty" }, emptyText) : null;
+  const out = [];
+  let last = "";
+  for (const { d, row } of items) {
+    const label = d ? MONTHS[d.getMonth()] + (d.getFullYear() !== from.getFullYear() ? " " + d.getFullYear() : "") : "";
+    if (d && label !== last) {
+      out.push(h("p", { class: "alm-month" }, label));
+      last = label;
+    }
+    out.push(row);
+  }
+  return out;
 }
 
-/** A row for a named day. Opens the day sheet. */
+/** A named day. Red numeral for red days, grey for the others. */
 export function holidayRow(hd, from = today()) {
   return h("button", {
-    class: "row" + (hd.red ? "" : " is-grey"), type: "button",
+    class: "alm-row " + (hd.red ? "is-red" : "is-grey"), type: "button",
+    "aria-label": hd.name + ", " + WEEKDAYS[hd.d.getDay()] + " " + formatDayMonth(hd.d) + (hd.red ? "" : ", ikke rød dag") +
+      ", " + (daysBetween(from, hd.d) < 0 ? "passert" : relativeDays(daysBetween(from, hd.d))),
     onclick: () => showDay(hd.d)
   },
-  dateBlock(hd.d),
-  h("span", { class: "row-main" },
-    h("span", { class: "row-title" }, hd.name),
-    h("span", { class: "row-sub" }, capitalize(WEEKDAYS[hd.d.getDay()]) + (hd.red ? "" : " · ikke rød dag"))),
-  h("span", { class: "row-tail" }, tail(hd.d, from)));
+  h("span", { class: "alm-num", "aria-hidden": "true" }, hd.d.getDate()),
+  h("span", { class: "alm-name", "aria-hidden": "true" }, hd.name,
+    hd.red ? null : h("span", { class: "alm-detail" }, "ikke rød dag")),
+  h("span", { class: "alm-meta", "aria-hidden": "true" }, when(hd.d, from)));
 }
 
-/** A row for a person's occurrence. `onOpen` opens the person sheet. */
-export function personRow(p, onOpen, { from = today(), leading = "date", selected = null } = {}) {
-  const dated = hasDate(p);
-  const occ = dated ? nextOccurrence(p, from) : null;
-  let lead;
-  if (leading === "check") {
-    lead = h("span", { class: "check", "aria-hidden": "true" }, h("span", null, "✓"));
-  } else if (leading === "date" && occ) {
-    lead = dateBlock(occ);
-  } else {
-    lead = h("span", { class: "avatar" + (dated ? " has-date" : ""), "aria-hidden": "true" }, initials(p.name));
-  }
-  const sub = occ ? describe(p, occ, { withDate: leading !== "date" }) : (p.tel || "Ingen dato lagt inn");
+export const holidayItem = (hd, from) => ({ d: hd.d, row: holidayRow(hd, from) });
+
+/**
+ * A person on a given occurrence (the next one by default). In select mode the meta
+ * column becomes a checkbox. The label carries the full date, since the numeral and
+ * the month heading are visual only.
+ */
+export function personRow(p, onOpen, { from = today(), occ, meta, selected = null } = {}) {
+  if (occ === undefined) occ = hasDate(p) ? nextOccurrence(p, from) : null;
+  const detail = occ ? describe(p, occ, { withDate: false }).toLowerCase() : (p.tel || "ingen dato");
+  const metaText = meta ?? (occ ? when(occ, from) : "sett dato");
+  const label = p.name + ", " + (occ
+    ? describe(p, occ).toLowerCase() + ", " + WEEKDAYS[occ.getDay()] + (meta ? "" : ", " + (daysBetween(from, occ) < 0 ? "passert" : relativeDays(daysBetween(from, occ))))
+    : "ingen dato" + (p.tel ? ", " + p.tel : ""));
   return h("button", {
-    class: "row" + (selected ? " is-on" : ""), type: "button",
+    class: "alm-row" + (selected ? " is-on" : ""), type: "button",
+    "aria-label": label,
     "aria-pressed": selected === null ? null : String(selected),
     dataset: { id: p.id },
     onclick: () => onOpen(p)
   },
-  lead,
-  h("span", { class: "row-main" }, h("span", { class: "row-title" }, p.name), h("span", { class: "row-sub" }, sub)),
-  h("span", { class: "row-tail" }, occ ? tail(occ, from) : "sett dato"));
+  h("span", { class: "alm-num", "aria-hidden": "true" }, occ ? occ.getDate() : "–"),
+  h("span", { class: "alm-name", "aria-hidden": "true" }, p.name, h("span", { class: "alm-detail" }, detail)),
+  selected !== null
+    ? h("span", { class: "alm-check", "aria-hidden": "true" }, "✓")
+    : h("span", { class: "alm-meta", "aria-hidden": "true" }, metaText));
 }
 
-export function listOrEmpty(rows, emptyText) {
-  return h("div", { class: "list" }, rows.length ? rows : h("p", { class: "list-empty" }, emptyText));
+export function personItem(p, onOpen, opts = {}) {
+  const occ = opts.occ !== undefined ? opts.occ : hasDate(p) ? nextOccurrence(p, opts.from || today()) : null;
+  return { d: occ, row: personRow(p, onOpen, { ...opts, occ }) };
 }
 
 let openPersonHandler = () => {};
@@ -71,37 +89,29 @@ export const openPerson = p => openPersonHandler(p);
 /** Details for one calendar date. */
 export function showDay(dt) {
   const t = today(), hd = holidayOn(dt), gap = daysBetween(t, dt), red = isRedDay(dt);
-  const facts = h("p", { class: "facts" },
-    h("span", { class: red ? "is-red" : "" }, red ? "Rød dag" : dt.getDay() === 6 ? "Lørdag, ikke rød" : "Virkedag"),
-    h("span", null, capitalize(relativeDays(gap))),
-    hd ? h("span", null, KIND_LABEL[hd.kind]) : null);
+  const kind = red ? "rød dag" : dt.getDay() === 6 ? "lørdag, ikke rød" : "virkedag";
+  const body = [h("p", { class: "facts" },
+    capitalize(relativeDays(gap)) + " · " + kind + (hd ? " · " + KIND_LABEL[hd.kind].toLowerCase() : ""))];
 
-  const body = [facts];
   if (hd) body.push(h("p", null, h("strong", null, hd.name + ". "), hd.note));
-  else if (dt.getDay() === 0) body.push(h("p", null, "Vanlig søndag. Alle søndager er røde dager."));
-  else if (dt.getDay() === 6) body.push(h("p", null, "Fri for de fleste, men ikke rød dag."));
+  else if (dt.getDay() === 0) body.push(h("p", null, "En vanlig søndag. Alle søndager er røde dager."));
+  else if (dt.getDay() === 6) body.push(h("p", null, "Fri for de fleste, men ikke en rød dag."));
 
   const mine = loadPeople().filter(p => occursOn(p, dt));
   if (mine.length) {
-    body.push(h("div", { class: "list" }, mine.map(p => h("button", {
-      class: "row", type: "button", onclick: () => openPerson(p)
-    }, h("span", { class: "avatar has-date", "aria-hidden": "true" }, initials(p.name)),
-    h("span", { class: "row-main" },
-      h("span", { class: "row-title" }, p.name),
-      h("span", { class: "row-sub" }, describe(p, dt)))))));
+    body.push(h("div", null, mine.map(p => personRow(p, openPerson, { from: t, occ: dt, meta: "åpne" }))));
   }
 
   const next = upcomingHolidays(new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + 1), { redOnly: true, limit: 1 })[0];
   if (next) {
     const n = daysBetween(dt, next.d);
     body.push(h("p", { class: "small muted" },
-      "Neste helligdag: " + next.inline + ", " + formatDayMonth(next.d) + " (" + n + " " + plural(n, "dag", "dager") + " senere)."));
+      "Neste helligdag er " + next.inline + ", " + formatDayMonth(next.d) + ", " + n + " " + plural(n, "dag", "dager") + " senere."));
   }
 
   openSheet({
     eyebrow: capitalize(WEEKDAYS[dt.getDay()]) + " · uke " + isoWeek(dt),
-    title: dt.getDate() + ". " + MONTHS[dt.getMonth()] + " " + dt.getFullYear(),
+    title: formatDayMonth(dt) + " " + dt.getFullYear(),
     red, body
   });
 }
-

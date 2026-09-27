@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { date, isoDate } from "../js/dates.js";
 import {
-  normalizePerson, nextOccurrence, occurrenceIn, occursOn, upcoming, yearsAt, describe, mergeImport, initials, isPast
+  normalizePerson, nextOccurrence, occurrenceIn, occursOn, upcoming, yearsAt, describe, mergeImport, isPast
 } from "../js/people.js";
 import { dueReminders, pruneNotified } from "../js/reminders.js";
 
@@ -57,11 +57,6 @@ test("import keeps contacts without a date and skips duplicates", () => {
   assert.equal(list.length, 3);
   assert.ok(list.some(p => p.name === "Ola" && p.day === null));
   assert.equal(new Set(list.map(p => p.id)).size, 3, "ids stay unique");
-});
-
-test("initials", () => {
-  assert.equal(initials("kari nordmann"), "KN");
-  assert.equal(initials("Øyvind"), "Ø");
 });
 
 test("reminders are due once and pruned by year", () => {
