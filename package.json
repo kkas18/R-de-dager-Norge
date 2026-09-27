@@ -1,0 +1,24 @@
+{
+  "name": "rode-dager",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Norske røde dager, virkedager og inneklemte dager. Installerbar PWA uten byggesteg.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "lint": "eslint .",
+    "e2e": "playwright test",
+    "feed": "node tools/build-feed.mjs",
+    "screenshots": "node tools/screenshots.mjs",
+    "icons": "python3 tools/make-icons.py",
+    "serve": "python3 -m http.server 8080",
+    "check": "npm run lint && npm test && node tools/build-feed.mjs --check"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.56.1",
+    "eslint": "^9.39.5",
+    "globals": "^17.12.0"
+  }
+}

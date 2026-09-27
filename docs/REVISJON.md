@@ -5,6 +5,9 @@
 **Goal:** Find what marks this app as AI-generated ("AI slop"), list real defects,
 and plan the path to a professional, elegant product.
 
+> **Status (v2.0.0):** Every phase below is implemented. See §8 for how
+> each finding was resolved and which tests guard it.
+
 ---
 
 ## 1. Verdict
@@ -345,3 +348,34 @@ first paint.
 | Typography research | Font recommendation search | §6 Phase 1 |
 
 Screenshots: `docs/revisjon/*.png`
+
+---
+
+## 8. Implementation status (v2.0.0)
+
+| Finding | Resolution | Guarded by |
+|---|---|---|
+| H1 offline cache poisoning | Versioned app shell, cache-first; only app navigations are served from cache; precache bypasses the HTTP cache | `e2e`: works offline; `test/shell.test.mjs` |
+| H2 restore drops contacts | `mergeImport` keeps undated people; every view re-renders on change | `test/people.test.mjs`, `e2e` restore test |
+| H3 XSS via backup | `normalizePerson` validates every field; no `innerHTML` anywhere (ESLint rule); CSP | `e2e` restore test, `eslint.config.js`, `test/csp.test.mjs` |
+| H4 duplicate reminders | One `runReminders` shared by page and worker, one record in IndexedDB, v1 record migrated | `test/people.test.mjs` |
+| H5 past bridge suggestions | `bridges(y, max, notBefore)` | `test/holidays.test.mjs`, `e2e` planner test |
+| H6 reload on first install | Reload only after the user taps «Oppdater» | `js/app.js` |
+| M1–M2 one-time and past days | One-time days require a year; «Passert» group; no negative countdowns | `test/people.test.mjs` |
+| M3 29 Feb in ICS | `RRULE:FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=-1` | `test/ics.test.mjs` |
+| M4 hidden header visible | Global `[hidden]` rule; select mode reworked | `e2e` view tests |
+| M5 wizard not re-rendering | Store listeners re-render on every save | — |
+| M6 «kristi» | Separate `inline` names keep proper nouns | `test/holidays.test.mjs` |
+| M7 empty IndexedDB mirror | Mirrored on every start | `js/app.js` |
+| M8 theme flash | Hashed inline `<head>` script; System/Lys/Mørk | `e2e` theme test |
+| M9 unbounded range | `MAX_RANGE_DAYS` | `test/holidays.test.mjs` |
+| M10 «i helg» stat | Replaced by «X av Y helligdager faller på en hverdag», excluding Sunday-only days | `test/holidays.test.mjs` |
+| §4 contrast, focus, targets | New tokens (≥ 5.2:1), `inert` background, focus return, 44 px targets, arrow-key tabs | `e2e`: axe WCAG 2.2 AA in both themes at 390 and 320 px |
+| §6 Phases 1–4 | Design tokens, Source Serif 4, 4 tabs, year view, planner budget, undo, «17» icon, manifest screenshots and shortcuts, `helligdager.ics`, ES modules, CI | `npm run check`, `npx playwright test` |
+
+**Deliberately not changed:** `.claude/settings.json` still enables the
+third-party plugin marketplace. Whether to trust it is the repo owner's
+decision.
+
+**Known limit:** the service worker is an ES module. Browsers without module
+worker support run the app online only.

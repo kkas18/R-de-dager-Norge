@@ -1,26 +1,34 @@
 {
+  "id": "./",
   "name": "Røde dager",
   "short_name": "Røde dager",
-  "description": "Norske røde dager, virkedager og inneklemte dager – uten nett.",
+  "description": "Norske røde dager, inneklemte dager og merkedager. Se neste helligdag, planlegg ferien og husk bursdager, uten nett.",
   "lang": "nb-NO",
   "dir": "ltr",
-  "start_url": "./",
+  "start_url": "./#idag",
   "scope": "./",
-  "id": "/rode-dager/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#F5F5F3",
-  "theme_color": "#F5F5F3",
-  "categories": ["productivity", "utilities"],
+  "background_color": "#F6F5F1",
+  "theme_color": "#F6F5F1",
+  "categories": ["productivity", "utilities", "lifestyle"],
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
     { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/badge-96.png", "sizes": "96x96", "type": "image/png", "purpose": "monochrome" },
     { "src": "icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [
-    { "name": "Neste røde dag", "url": "./", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Kalender", "url": "./#kalender", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Planlegg ferien", "short_name": "Planlegg", "url": "./#planlegg", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Personer", "url": "./#personer", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "screenshots": [
+    { "src": "screenshots/idag.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Nedtelling til neste helligdag" },
+    { "src": "screenshots/kalender.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Månedskalender med røde dager" },
+    { "src": "screenshots/planlegg.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Forslag til inneklemte dager" }
   ]
 }
