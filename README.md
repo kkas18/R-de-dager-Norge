@@ -1,123 +1,107 @@
 # Røde dager
 
-Norske røde dager, virkedager og inneklemte dager. Én HTML-fil, ingen eksterne
-kall, virker uten nett og kan installeres som app på telefonen.
+Norske røde dager, inneklemte dager og merkedager. En installerbar webapp uten
+byggesteg og uten eksterne kall. Den virker uten nett.
 
-## Innhold
+## Sidene
 
-| Fil | Hva den gjør |
+- **I dag** teller ned til neste helligdag og viser denne uken. Du ser også
+  neste langhelg, neste inneklemte dag, hva som kommer det neste året og dine
+  neste dager.
+- **Kalender** har månedsvisning med ukenummer og en stille forklaring under,
+  og årsvisning med alle tolv måneder. Sveip sidelengs for å bytte måned, og
+  trykk på månedsnavnet for å hoppe.
+- **Personer** samler bursdager, jubileer og andre dager, med eller uten dato.
+  Du kan søke og filtrere. «Sett dato» går gjennom alle uten dato, én om gangen.
+  Langt trykk eller «Velg» gir flervalg. Sletting kan angres, i stedet for et
+  spørsmål først.
+- **Planlegg** foreslår inneklemte dager. Forslag som ligger i fortiden vises
+  ikke. Hvert forslag har en ukestripe, og du kan planlegge perioder mot dine
+  egne feriedager og legge dem i kalenderen. Her regner du også ut virkedager
+  mellom to datoer.
+- **Innstillinger** (knappen øverst til høyre):
+  - tema (som telefonen, lyst eller mørkt)
+  - hva nedtellingen viser
+  - tidspunkt for alarmen i kalenderen
+  - varsler, sikkerhetskopi og abonnement på helligdagene
+
+## Filer
+
+| Sti | Innhold |
 |---|---|
-| `index.html` | Hele appen: grensesnitt, datologikk og beregninger |
-| `manifest.json` | Navn, farger og ikoner for installasjon |
-| `sw.js` | Service worker: offline-drift og automatisk oppdatering |
-| `icons/` | Ikoner for Android, iOS og nettleserfane |
-| `tools/make-icons.py` | Lager ikonene på nytt hvis du endrer designet |
+| `index.html` | Skall: markup, CSP og temaskript som kjører før første tegning |
+| `css/app.css` | Designsystemet: tokens for type, avstand, radius og farge |
+| `js/dates.js`, `js/holidays.js` | Rene dato- og helligdagsfunksjoner (testet) |
+| `js/people.js`, `js/reminders.js`, `js/ics.js` | Datamodell, varsler og kalenderfiler (testet) |
+| `js/store.js`, `js/kv.js` | Lagring i localStorage, speilet til IndexedDB for service workeren |
+| `js/dom.js`, `js/ui.js` | `h()`-hjelper uten innerHTML, bunnark og toast |
+| `js/views/*.js` | De fire sidene og innstillingene |
+| `js/version.js` | Versjonsnummeret, som bare står her |
+| `sw.js` | Service worker (ES-modul): app-skall per versjon, bakgrunnsvarsler |
+| `helligdager.ics` | Abonnerbar kalender for 2020–2045, generert |
+| `fonts/` | Source Serif 4 (SIL OFL), levert fra egen server |
+| `icons/`, `screenshots/` | Ikoner og skjermbilder til installasjonen |
+| `tools/` | Generatorer for ikoner, kalenderfeed og skjermbilder |
+| `test/`, `e2e/` | Enhetstester (`node:test`) og Playwright-tester |
 
-## Funksjoner
+## Utvikling
 
-**Nå** viser neste røde dag med nedtelling, denne ukens dager og de neste
-helligdagene. Trykk på en dag for detaljer i et bunnark.
+```bash
+npm install
+npm run serve        # http://localhost:8080
+npm run lint         # ESLint, blant annet forbud mot innerHTML og confirm()
+npm test             # enhetstester for dato, helligdager, personer, ics, CSP og app-skall
+npx playwright test  # alle sider i begge temaer ved 390 og 320 px, axe (WCAG 2.2 AA), offline, flyter
+```
 
-**Kalender** er et månedsrutenett med ukenummer. Dra sidelengs for å bla
-mellom måneder, trykk månedsnavnet for å hoppe til en annen måned eller et
-annet år, og «Se hele året» for hele årslisten. Har du bladd deg langt bort,
-dukker en «I dag»-knapp opp nederst som tar deg rett tilbake til dagens måned. Under kalenderen står hvor
-mange røde dager som faller på hverdag og hvor mange som forsvinner i helgen.
+Når du endrer noe:
 
-**Mine** er dine egne datoer: bursdager, jubileer og andre merkedager. De vises
-i kalenderen med grå prikk, på forsiden med nedtelling, og kan legges i
-telefonkalenderen som årlig hendelse med alarm. Navn og telefonnummer kan
-hentes fra telefonens kontaktliste med Contact Picker API, som finnes i Chrome
-på Android. Fødselsdato er ikke blant feltene nettleseren gir ut, så datoen
-skrives inn manuelt. Velger du flere kontakter samtidig, havner alle i Kontakter-fanen,
-og du setter datoen på hver av dem der. Har dagen et nummer, får du ringe- og meldingsknapp. Dagene lagres lokalt på
-telefonen, og kan tas sikkerhetskopi av som JSON-fil.
+- **Helligdagsreglene:** kjør `npm run feed`. CI stopper hvis `helligdager.ics`
+  er utdatert.
+- **Temaskriptet i `<head>`:** oppdater hashen i CSP-en. `test/csp.test.mjs`
+  forteller hvilken hash som mangler.
+- **Nye filer i `js/` eller `css/`:** legg dem i `SHELL` i `sw.js`.
+  `test/shell.test.mjs` sier fra hvis du glemmer det.
+- **Ikonene:** `pip install pillow fonttools brotli`, deretter `npm run icons`.
 
-**Kontakter** er personene dine som en telefonliste: sortert på navn, gruppert
-på forbokstav, med søk på navn og nummer. Hentes fra telefonens kontaktliste
-eller legges inn manuelt. Trykk et navn for å sette bursdag, ringe, sende
-melding eller legge dagen i telefonkalenderen. Knappen «Sett bursdager» går
-gjennom alle uten dato på rad, med «Lagre og neste» og «Hopp over». Langt trykk
-på et navn, eller «Velg» over listen, gir avkrysning der du kan slette eller
-eksportere flere samtidig. Kontakter uten bursdag ligger i
-listen til du setter datoen, og holdes utenfor kalender, nedtelling og varsler.
+## Ny versjon
 
-**Beregn** har to verktøy: antall virkedager mellom to datoer, og forslag til
-inneklemte dager — hvilke få feriedager som gir flest sammenhengende fridager.
-
-Bevegelige dager regnes ut fra påskedagen med Meeus' formel, så alle år virker,
-også langt fram i tid.
-
-Appen navigeres med sveip mellom sidene, gir kort vibrasjon ved valg, husker
-siste side og tema, og tilbyr en installasjonsknapp under Om når nettleseren
-støtter det.
+Øk `VERSION` i `js/version.js` og push. Installerte apper henter den nye
+versjonen i bakgrunnen og viser «En ny versjon er klar» med knappen
+**Oppdater**. Siden lastes aldri inn på nytt uten at du trykker.
 
 ## Legg ut på GitHub Pages
 
-1. Lag et nytt repo, for eksempel `rode-dager`.
-2. Last opp alle filene slik de ligger her, med mappene `icons/` og `tools/`.
-   `index.html` må ligge i rota av repoet.
-3. Gå til **Settings → Pages**. Under *Build and deployment* velger du
-   *Deploy from a branch*, branch `main` og mappe `/ (root)`. Trykk **Save**.
-4. Etter et par minutter ligger appen på
-   `https://<brukernavn>.github.io/rode-dager/`.
+Gå til **Settings → Pages** og velg *Deploy from a branch*, `main` og `/ (root)`.
+Appen bruker bare relative stier, så reponavnet spiller ingen rolle.
 
-Bruker du et annet reponavn, endre `"id"` i `manifest.json` til samme navn.
+## Installer
 
-## Installer på telefonen
-
-**Android og Samsung Internet / Chrome:** åpne adressen, trykk menyen og velg
-*Installer app* eller *Legg til på startskjerm*. Appen starter uten
-nettleserlinje, i stående format.
-
-**iPhone:** åpne adressen i Safari, trykk del-knappen og velg
-*Legg til på Hjem-skjerm*.
-
-## Søndager og helligdager
-
-Etter helligdagsloven er alle søndager helligdager, mens 1. og 17. mai er røde
-dager uten å være helligdager. I arbeidslivet menes med helligdag som regel de
-navngitte høytidsdagene, og appen skiller derfor mellom dem: søndager er røde i
-kalenderen, men listene over helligdager tar bare med de navngitte. Under Om
-kan nedtellingen settes til å telle til neste helligdag, som er standard, eller
-til nærmeste røde dag inkludert vanlige søndager.
+- **Android (Chrome eller Samsung Internet):** menyen → *Installer app*, eller
+  knappen under Innstillinger.
+- **iPhone:** Safari → del-knappen → *Legg til på Hjem-skjerm*.
 
 ## Varsler
 
-Appen varsler på tre måter, i økende grad av pålitelighet:
+1. **Kalenderfilen** er den eneste måten å få alarm til fast tid uten server.
+   Den har årlig gjentakelse og alarm på klokkeslettet du velger. Bursdager
+   29. februar havner på siste dag i februar hvert år.
+2. **Når du åpner appen**, får du varsel om dager som er innenfor varselgrensen.
+3. **Bakgrunnssjekk** via `periodicSync` finnes bare i Chrome på Android, i
+   installert app, og systemet bestemmer når den kjører.
 
-1. Melding når du åpner appen, hvis en dag er innenfor varselgrensen.
-2. Bakgrunnssjekk via `periodicSync` i service workeren. Krever installert app
-   og gis bare av Chrome på Android. Systemet bestemmer når sjekken kjøres,
-   vanligvis en gang i døgnet.
-3. Eksport til telefonkalenderen som `.ics` med `RRULE:FREQ=YEARLY` og
-   `VALARM`. Dette er den eneste måten som gir alarm på et bestemt klokkeslett
-   uten en server, og fungerer på både Android og iPhone.
+Appen og service workeren deler én oversikt over sendte varsler i IndexedDB,
+så samme varsel kommer bare én gang.
 
-Dagene lagres i `localStorage` og speiles til IndexedDB, siden service workeren
-ikke kan lese `localStorage`.
+## Nettlesere
 
-## Oppdatering
-
-HTML-filen hentes fra nett først, resten ligger i cache. Når du pusher nye
-filer til GitHub, får du meldingen «Ny versjon er klar» neste gang appen
-åpnes med nett. Trykk **Last inn**, så byttes den ut.
-
-Endrer du ikoner eller filnavn: øk `CACHE`-nummeret øverst i `sw.js`, for
-eksempel til `rode-dager-v1.0.1`, så tømmes den gamle cachen.
-
-## Lage ikoner på nytt
-
-```bash
-pip install pillow
-python3 tools/make-icons.py
-```
-
-Fargene ligger øverst i skriptet: blekk `#17181A`, papir `#F5F5F3`,
-rød `#BA0C2F`.
+Appen krever en moderne nettleser: ES-moduler, `inert`, `:has()` og
+`color-mix()`. Service workeren er en ES-modul. I nettlesere uten støtte for
+det virker appen fortsatt, men ikke uten nett.
 
 ## Forbehold
 
-Appen dekker helligdagene i lov om helligdager og helligdagsfred, samt 1. mai
-og 17. mai. Den tar ikke hensyn til turnusordninger, lokale avtaler eller
-bransjeavtaler om fri på jul- og nyttårsaften.
+Appen dekker helligdagsloven og lov om 1. og 17. mai. Den tar ikke hensyn til
+turnus, lokale avtaler eller tariffavtaler om fri på jul- og nyttårsaften.
+
+Revisjonen som ligger bak versjon 2 finner du i `docs/REVISJON.md`.
