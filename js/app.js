@@ -1,6 +1,7 @@
 // Bootstrap: routing between views, tab keyboard support, swipe, service worker.
 
 import { $, reducedMotion } from "./dom.js";
+import { WEEKDAYS, MONTHS_SHORT, isoWeek, startOfDay } from "./dates.js";
 import { prefs, onPeopleChange, mirrorPeople } from "./store.js";
 import { sheetIsOpen, toast } from "./ui.js";
 import { renderToday } from "./views/today.js";
@@ -110,7 +111,13 @@ function initSwipe() {
   main.addEventListener("touchend", () => { x0 = null; });
 }
 
+function renderMasthead() {
+  const t = startOfDay();
+  $("#brandDate").textContent = WEEKDAYS[t.getDay()] + " " + t.getDate() + ". " + MONTHS_SHORT[t.getMonth()] + ". · uke " + isoWeek(t);
+}
+
 function renderAll() {
+  renderMasthead();
   renderToday();
   renderCalendar();
   renderPeople();

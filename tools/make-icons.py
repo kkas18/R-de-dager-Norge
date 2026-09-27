@@ -21,8 +21,8 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 FONT = os.path.join(ROOT, "fonts", "source-serif-4-600.woff2")
 OUT = os.path.join(ROOT, "icons")
 
-PAPER = "#F6F5F1"
-RED = "#B0102D"
+PAPER = "#F4F1E8"
+RED = "#B3122E"
 TEXT = "17"
 SS = 4  # supersampling
 

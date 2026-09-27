@@ -1,15 +1,15 @@
-// Kalender: full-bleed month grid with a quiet legend, plus a 12-month year view.
+// Kalender: a printed month page and a printed year calendar with real numerals.
 
 import { h, mount, $, haptic, reducedMotion } from "../dom.js";
 import {
-  MONTHS, WEEKDAYS_SHORT, WEEK_ORDER, addDays, capitalize, date, daysInMonth, formatFull, formatDayMonth,
-  isoWeek, isWeekend, sameDay
+  MONTHS, WEEKDAYS, WEEKDAYS_SHORT, WEEK_ORDER, addDays, capitalize, date, daysInMonth, formatFull, formatDayMonth,
+  isoWeek, sameDay
 } from "../dates.js";
 import { holidaysOf, holidayOn, isRedDay, yearSummary } from "../holidays.js";
-import { occursOn, hasDate, occurrenceIn, describe } from "../people.js";
+import { occursOn, hasDate, occurrenceIn } from "../people.js";
 import { loadPeople } from "../store.js";
 import { openSheet, closeSheet } from "../ui.js";
-import { holidayRow, showDay, tail, today, openPerson } from "./shared.js";
+import { almanac, holidayItem, holidayRow, personRow, showDay, today, openPerson } from "./shared.js";
 
 let cursor = null;          // first of the shown month
 let selected = null;
@@ -100,9 +100,6 @@ function monthGrid(y, m, t) {
       const dt = addDays(start, w * 7 + i);
       const hd = holidayOn(dt);
       const own = people.some(p => occursOn(p, dt));
-      const dots = [];
-      if (hd && hd.red) dots.push(h("i"));
-      if ((hd && !hd.red) || own) dots.push(h("i", { class: "other" }));
       const label = capitalize(formatFull(dt)) + (hd ? ", " + hd.name : "") + (own ? ", en av dine dager" : "");
       cells.push(h("button", {
         type: "button",
@@ -111,7 +108,10 @@ function monthGrid(y, m, t) {
         "aria-label": label,
         "aria-current": sameDay(dt, t) ? "date" : null,
         onclick: () => { selected = dt; renderCalendar(); showDay(dt); }
-      }, dt.getDate(), dots.length ? h("span", { class: "dots", "aria-hidden": "true" }, dots) : null));
+      },
+      h("span", null, dt.getDate()),
+      hd ? h("span", { class: "mark" + (hd.red ? "" : " grey"), "aria-hidden": "true" }) : null,
+      own ? h("span", { class: "own", "aria-hidden": "true" }) : null));
     }
   }
   return cells;
@@ -119,44 +119,37 @@ function monthGrid(y, m, t) {
 
 function renderMonth(dir) {
   const y = cursor.getFullYear(), m = cursor.getMonth(), t = today();
-  $("#calTitle").textContent = capitalize(MONTHS[m]) + " " + y;
+  mount($("#calTitle"), capitalize(MONTHS[m]) + " ", h("span", { class: "muted" }, y));
+  $("#calTitle").setAttribute("aria-label", capitalize(MONTHS[m]) + " " + y + ". Velg måned og år");
   mount($("#grid"), monthGrid(y, m, t));
   if (dir && !reducedMotion()) {
-    $("#grid").animate([{ opacity: .4, transform: "translateX(" + (dir > 0 ? 16 : -16) + "px)" }, { opacity: 1, transform: "none" }],
-      { duration: 200, easing: "cubic-bezier(.22,.61,.36,1)" });
+    $("#grid").animate([{ opacity: .3 }, { opacity: 1 }], { duration: 180, easing: "ease-out" });
   }
 
-  const items = holidaysOf(y).filter(hd => hd.d.getMonth() === m).map(hd => ({ d: hd.d, row: holidayRow(hd, t) }))
-    .concat(peopleDatesIn(y, m).map(({ p, d }) => ({
-      d, row: h("button", { class: "row", type: "button", onclick: () => openPerson(p) },
-        h("span", { class: "row-date", "aria-hidden": "true" },
-          h("span", { class: "d muted" }, d.getDate()), h("span", { class: "m" }, MONTHS[m].slice(0, 3))),
-        h("span", { class: "row-main" }, h("span", { class: "row-title" }, p.name),
-          h("span", { class: "row-sub" }, describe(p, d, { withDate: false }))),
-        h("span", { class: "row-tail" }, tail(d, t)))
-    })))
+  const items = holidaysOf(y).filter(hd => hd.d.getMonth() === m).map(hd => holidayItem(hd, t))
+    .concat(peopleDatesIn(y, m).map(({ p, d }) => ({ d, row: personRow(p, openPerson, { from: t, occ: d, meta: WEEKDAYS[d.getDay()] }) })))
     .sort((a, b) => a.d - b.d);
   $("#monthListHead").textContent = "Merkedager i " + MONTHS[m];
-  mount($("#monthList"), h("div", { class: "list" }, items.length ? items.map(x => x.row)
-    : h("p", { class: "list-empty" }, "Ingen merkedager i " + MONTHS[m] + ".")));
+  mount($("#monthList"), items.length ? items.map(x => x.row)
+    : h("p", { class: "alm-empty" }, "Ingen merkedager i " + MONTHS[m] + ". Bare vanlige søndager."));
 
   const s = yearSummary(y);
-  $("#yearNote").textContent = s.onWeekdays + " av " + s.count + " helligdager i " + y +
-    " faller på en hverdag. Påskedag er " + formatDayMonth(s.easter) + ", og de bevegelige dagene følger den.";
+  $("#yearNote").textContent = "I " + y + " faller " + s.onWeekdays + " av " + s.count +
+    " helligdager på en hverdag. Påskedag er " + formatDayMonth(s.easter) + ", og de bevegelige dagene følger den.";
   $("#yearAllBtn").textContent = "Alle merkedager i " + y;
 }
 
 function renderYear() {
   const y = cursor.getFullYear(), t = today();
-  $("#yearTitle").textContent = String(y);
+  mount($("#yearTitle"), String(y));
   const months = MONTHS.map((name, m) => {
     const first = date(y, m, 1);
     const lead = (first.getDay() + 6) % 7;
-    const dots = [];
-    for (let i = 0; i < lead; i++) dots.push(h("i", { class: "blank" }));
+    const nums = [];
+    for (let i = 0; i < lead; i++) nums.push(h("i"));
     for (let d = 1; d <= daysInMonth(y, m); d++) {
       const dt = date(y, m, d);
-      dots.push(h("i", { class: (isRedDay(dt) ? "red" : isWeekend(dt) ? "wknd" : "") + (sameDay(dt, t) ? " today" : "") }));
+      nums.push(h("i", { class: (isRedDay(dt) ? "red" : "") + (sameDay(dt, t) ? " today" : "") }, d));
     }
     const reds = holidaysOf(y).filter(hd => hd.red && hd.d.getMonth() === m).length;
     return h("button", {
@@ -164,7 +157,7 @@ function renderYear() {
       class: "mini" + (y === t.getFullYear() && m === t.getMonth() ? " is-current" : ""),
       "aria-label": capitalize(name) + " " + y + ", " + reds + (reds === 1 ? " helligdag" : " helligdager"),
       onclick: () => { cursor = date(y, m, 1); setMode("month"); }
-    }, h("span", { class: "mini-name" }, capitalize(name)), h("span", { class: "mini-grid", "aria-hidden": "true" }, dots));
+    }, h("span", { class: "mini-name" }, capitalize(name)), h("span", { class: "mini-grid", "aria-hidden": "true" }, nums));
   });
   mount($("#yearGrid"), months);
 }
@@ -182,18 +175,19 @@ export function updateTodayButton() {
 
 function jumpSheet() {
   const y = cursor.getFullYear();
-  const years = h("div", { class: "seg", role: "group", "aria-label": "År" },
+  const years = h("div", { class: "tabs", role: "group", "aria-label": "År" },
     [y - 1, y, y + 1, y + 2].map(yy => h("button", {
       type: "button", "aria-pressed": String(yy === y),
       onclick: () => { cursor = date(yy, cursor.getMonth(), 1); closeSheet(); renderCalendar(); }
     }, yy)));
-  const months = h("div", { class: "list" }, MONTHS.map((name, m) => {
+  const months = h("div", null, MONTHS.map((name, m) => {
     const reds = holidaysOf(y).filter(hd => hd.red && hd.d.getMonth() === m).length;
     return h("button", {
-      class: "row", type: "button",
+      class: "alm-row", type: "button",
       onclick: () => { cursor = date(y, m, 1); closeSheet(); renderCalendar(); }
-    }, h("span", { class: "row-main" }, h("span", { class: "row-title" }, capitalize(name))),
-    h("span", { class: "row-tail" }, reds ? reds + (reds === 1 ? " helligdag" : " helligdager") : ""));
+    }, h("span", { class: "alm-num", "aria-hidden": "true" }, m + 1),
+    h("span", { class: "alm-name" }, capitalize(name)),
+    h("span", { class: "alm-meta" }, reds ? reds + (reds === 1 ? " helligdag" : " helligdager") : ""));
   }));
   openSheet({ eyebrow: "Gå til", title: String(y), body: [years, months] });
 }
@@ -203,6 +197,6 @@ function yearListSheet() {
   openSheet({
     eyebrow: "Alle merkedager",
     title: String(y),
-    body: h("div", { class: "list" }, holidaysOf(y).map(hd => holidayRow(hd, t)))
+    body: h("div", null, almanac(holidaysOf(y).map(hd => ({ d: hd.d, row: holidayRow(hd, t) })), date(y, 0, 1)))
   });
 }

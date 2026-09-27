@@ -62,15 +62,16 @@ test("calendar cells are at least 40px wide on a 320px screen", async ({ page })
   expect(box.width).toBeGreaterThanOrEqual(40);
 });
 
-test("countdown shows first juledag on 27 September 2026", async ({ page }) => {
+test("the leaf shows første juledag in 89 days on 27 September 2026", async ({ page }) => {
   await open(page);
-  await expect(page.locator(".hero-count .num")).toHaveText("89");
-  await expect(page.locator("#v-idag .hero-title")).toHaveText("til første juledag");
+  await expect(page.locator(".leaf-day")).toHaveText("25");
+  await expect(page.locator(".leaf-name")).toHaveText("Første juledag");
+  await expect(page.locator(".leaf-count")).toHaveText("Om 89 dager.");
 });
 
 test("add a person, see it everywhere, delete it and undo", async ({ page }) => {
   await open(page, "personer");
-  await page.getByRole("button", { name: "Legg til" }).click();
+  await page.locator("#pAdd").click();
   await page.locator("#fName").fill("Per Test");
   await page.locator("#fDate").fill("1990-10-01");
   await page.getByRole("button", { name: "Lagre" }).click();
@@ -80,7 +81,7 @@ test("add a person, see it everywhere, delete it and undo", async ({ page }) => 
   await expect(page.locator("#peopleSoonList")).toContainText("Per Test");
 
   await page.locator("#tab-personer").click();
-  await page.locator("#pList .row", { hasText: "Per Test" }).click();
+  await page.locator("#pList .alm-row", { hasText: "Per Test" }).click();
   await page.getByRole("button", { name: "Slett" }).click();
   await expect(page.locator("#pList")).not.toContainText("Per Test");
   await page.getByRole("button", { name: "Angre" }).click();
@@ -103,7 +104,7 @@ test("restore keeps undated contacts and never runs injected markup", async ({ p
 
 test("sheet traps focus, closes on Escape and returns focus", async ({ page }) => {
   await open(page);
-  const trigger = page.locator("#comingList .row").first();
+  const trigger = page.locator("#comingList .alm-row").first();
   await trigger.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("#sheet")).toHaveClass(/is-open/);
@@ -152,6 +153,49 @@ test("works offline after the first visit", async ({ page, context }) => {
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.locator("#v-idag .hero-title")).toHaveText("til første juledag");
+  await expect(page.locator(".leaf-name")).toHaveText("Første juledag");
   await context.setOffline(false);
+});
+
+test("Back closes an open sheet instead of leaving the page", async ({ page }) => {
+  await open(page, "kalender");
+  await page.locator(".cell", { hasText: /^24$/ }).first().click();
+  await expect(page.locator("#sheet")).toHaveClass(/is-open/);
+  await page.goBack();
+  await expect(page.locator("#sheet")).not.toHaveClass(/is-open/);
+  await expect(page).toHaveURL(/#kalender$/);
+  await expect(page.locator("#v-kalender")).toBeVisible();
+});
+
+test("the year view is a printed calendar with real numerals", async ({ page }) => {
+  await open(page, "kalender");
+  await page.locator("#calMode [data-mode=year]").click();
+  await expect(page.locator(".mini")).toHaveCount(12);
+  await expect(page.locator(".mini").nth(11).locator(".red", { hasText: /^25$/ })).toHaveCount(1);
+});
+
+test("closing and quickly reopening a sheet keeps Back working", async ({ page }) => {
+  await open(page, "kalender");
+  await page.locator(".cell", { hasText: /^24$/ }).first().click();
+  await page.locator("#sheetClose").click();
+  await page.locator(".cell", { hasText: /^25$/ }).first().click();
+  await page.waitForTimeout(300); // let the first Back land
+  await expect(page.locator("#sheet")).toHaveClass(/is-open/);
+  await page.goBack();
+  await expect(page.locator("#sheet")).not.toHaveClass(/is-open/);
+  await expect(page.locator("#v-kalender")).toBeVisible();
+});
+
+test("a reload with a sheet open leaves no dead Back step", async ({ page }) => {
+  await open(page, "kalender");
+  await page.locator(".cell", { hasText: /^24$/ }).first().click();
+  await page.reload();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => history.state && history.state.sheet)).toBeFalsy();
+});
+
+test("rows tell screen readers the date and when it is", async ({ page }) => {
+  await open(page);
+  await expect(page.locator("#peopleSoonList .alm-row").first()).toHaveAttribute("aria-label", /Kari Nordmann, bursdag 3\. oktober · fyller 38, lørdag, om 6 dager/);
+  await expect(page.locator("#comingList .alm-row").first()).toHaveAttribute("aria-label", /Julaften, torsdag 24\. desember, ikke rød dag, om 88 dager/);
 });

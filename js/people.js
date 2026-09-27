@@ -99,13 +99,6 @@ export function describe(p, occ, { withDate = true } = {}) {
   return s;
 }
 
-export function initials(name) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0] ? [...parts[0]][0] : "?";
-  const last = parts.length > 1 ? [...parts[parts.length - 1]][0] : "";
-  return (first + last).toUpperCase();
-}
-
 export function reminderLabel(remind) {
   if (remind < 0) return null;
   return remind === 0 ? "varsel på dagen" : "varsel " + remind + " " + (remind === 1 ? "dag" : "dager") + " før";

@@ -1,4 +1,4 @@
-// Planlegg: bridge-day suggestions with a vacation budget, and a workday counter.
+// Planlegg: bridge-day suggestions set as sentences and a table, a vacation budget, and a workday counter.
 
 import { h, mount, $, haptic, downloadFile } from "../dom.js";
 import { WEEKDAY_LETTERS, addDays, formatRange, formatCompact, isoDate, parseIsoDate, plural, capitalize, WEEKDAYS } from "../dates.js";
@@ -6,7 +6,7 @@ import { bridges, rangeStats, MAX_RANGE_DAYS } from "../holidays.js";
 import { periodCalendar } from "../ics.js";
 import { prefs } from "../store.js";
 import { toast } from "../ui.js";
-import { holidayRow, today } from "./shared.js";
+import { almanac, holidayItem, today } from "./shared.js";
 
 const planKey = y => "rd:plan:" + y;
 // The plan is the set of vacation days taken, not suggestion ids: suggestions change
@@ -54,14 +54,13 @@ function renderBudget(y) {
   const plan = loadPlan(y);
   const used = plan.days.length;
   const left = plan.total - used;
-  mount($("#budget"),
-    h("div", null, h("span", { class: "eyebrow" }, "Planlagt"), h("span", { class: "num" }, used)),
-    h("div", null, h("span", { class: "eyebrow" }, "Igjen"), h("span", { class: "num" + (left < 0 ? " is-over" : "") }, left)),
-    h("div", null, h("span", { class: "eyebrow" }, "Totalt"), h("span", { class: "num" }, plan.total)));
+  $("#budgetText").textContent = used === 0
+    ? "Ingen er planlagt ennå."
+    : used + " er planlagt, " + (left >= 0 ? left + " igjen." : -left + " for mange.");
   mount($("#plannedDays"), used ? [
-    h("span", null, "Planlagte feriedager: " + plan.days.map(d => formatCompact(parseIsoDate(d))).join(", ") + ". "),
+    "Planlagt: " + plan.days.map(d => formatCompact(parseIsoDate(d))).join(", ") + ". ",
     h("button", {
-      class: "btn btn-quiet", type: "button",
+      class: "link", type: "button",
       onclick: () => { savePlan(y, { ...plan, days: [] }); renderBridges(); }
     }, "Nullstill")
   ] : null);
@@ -70,13 +69,10 @@ function renderBudget(y) {
 
 function strip(period) {
   return h("div", { class: "strip", "aria-hidden": "true" }, period.days.map(({ d, kind }) =>
-    h("span", { class: kind }, WEEKDAY_LETTERS[d.getDay()], h("b", null, d.getDate()))));
+    h("span", { class: kind }, h("i", null, WEEKDAY_LETTERS[d.getDay()]), h("b", null, d.getDate()))));
 }
 
-function describePeriod(p) {
-  const take = p.take.map(d => WEEKDAYS[d.getDay()] + " " + formatCompact(d).split(" ")[1]).join(", ");
-  return capitalize(formatRange(p.from, p.to)) + ". Ta ut " + take + ".";
-}
+const takeText = p => p.take.map(d => WEEKDAYS[d.getDay()] + " " + d.getDate() + ".").join(", ");
 
 function renderBridges() {
   const y = Number($("#bYear").value), max = Number($("#bMax").value), t = today();
@@ -85,24 +81,25 @@ function renderBridges() {
   renderBudget(y);
 
   if (!list.length) {
-    mount($("#planList"), h("p", { class: "lede" }, y === t.getFullYear()
-      ? "Ingen flere forslag i år med inntil " + max + " " + plural(max, "feriedag", "feriedager") + ". Prøv neste år eller flere feriedager."
-      : "Ingen forslag med så få feriedager. Øk antallet."));
+    mount($("#planList"), h("p", { class: "alm-empty" }, y === t.getFullYear()
+      ? "Ingen flere forslag i år med inntil " + max + " " + plural(max, "feriedag", "feriedager") + ". Prøv neste år."
+      : "Ingen forslag med så få feriedager. Velg flere."));
     return;
   }
 
   mount($("#planList"), list.map(p => {
     const planned = isPlanned(plan, p);
-    return h("article", { class: "plan" + (planned ? " is-planned" : ""), "aria-label": describePeriod(p) },
+    const label = capitalize(formatRange(p.from, p.to)) + ": " + p.total + " dager fri for " + p.vacation + " " +
+      plural(p.vacation, "feriedag", "feriedager") + ". Ta fri " + takeText(p);
+    return h("article", { class: "plan" + (planned ? " is-planned" : ""), "aria-label": label },
       h("div", { class: "plan-top" },
-        h("p", { class: "plan-gain" }, h("span", { class: "num" }, p.total), "fridager"),
-        h("p", { class: "small muted" }, "for " + p.vacation + " " + plural(p.vacation, "feriedag", "feriedager"))),
-      h("p", { class: "plan-range" }, capitalize(formatRange(p.from, p.to))),
-      h("p", { class: "small muted" }, "Ta ut " + p.take.map(formatCompact).join(", ")),
+        h("p", { class: "plan-gain" }, h("span", { class: "num" }, p.total), "dager fri"),
+        h("p", { class: "plan-cost" }, "for " + p.vacation + " " + plural(p.vacation, "feriedag", "feriedager"))),
+      h("p", { class: "plan-range" }, capitalize(formatRange(p.from, p.to)) + " · ta fri " + takeText(p)),
       strip(p),
-      h("div", { class: "btn-row" },
+      h("div", { class: "link-row" },
         h("button", {
-          class: "btn " + (planned ? "btn-primary" : "btn-secondary"), type: "button", "aria-pressed": String(planned),
+          class: "link" + (planned ? " red" : ""), type: "button", "aria-pressed": String(planned),
           onclick: () => {
             const cur = loadPlan(y);
             const take = p.take.map(isoDate);
@@ -111,9 +108,9 @@ function renderBridges() {
             haptic(8);
             renderBridges();
           }
-        }, planned ? "Planlagt" : "Planlegg"),
+        }, planned ? "Planlagt ✓" : "Planlegg"),
         h("button", {
-          class: "btn btn-secondary", type: "button",
+          class: "link", type: "button",
           onclick: () => {
             downloadFile(periodCalendar(p), "fri-" + isoDate(p.from) + ".ics", "text/calendar");
             toast("Åpne filen for å legge perioden i kalenderen.");
@@ -126,24 +123,24 @@ function renderRange() {
   const a = parseIsoDate($("#rFrom").value), b = parseIsoDate($("#rTo").value);
   const out = $("#rangeOut"), list = $("#rangeHolidays");
   mount(list);
-  if (!a || !b) { mount(out, h("p", { class: "lede" }, "Velg to datoer.")); return; }
+  if (!a || !b) { mount(out, h("p", { class: "alm-empty" }, "Velg to datoer.")); return; }
   const s = rangeStats(a, b);
-  if (s.error === "reversed") { mount(out, h("p", { class: "lede" }, "Sluttdatoen er før startdatoen.")); return; }
+  if (s.error === "reversed") { mount(out, h("p", { class: "alm-empty" }, "Sluttdatoen er før startdatoen.")); return; }
   if (s.error === "tooLong") {
-    mount(out, h("p", { class: "lede" }, "Velg en periode på under " + Math.floor(MAX_RANGE_DAYS / 366) + " år."));
+    mount(out, h("p", { class: "alm-empty" }, "Velg en periode på under " + Math.floor(MAX_RANGE_DAYS / 366) + " år."));
     return;
   }
-  const line = (label, value, lead = false) =>
-    h("p", { class: "stat-line" + (lead ? " lead" : "") }, h("span", { class: "muted" }, label), h("span", { class: "num" }, value));
+  const line = (label, value) =>
+    h("p", { class: "stat-line" }, h("span", null, label), h("span", { class: "num" }, value));
   mount(out,
-    line("Virkedager", s.work, true),
+    h("p", { class: "stat-lead" }, h("span", { class: "num" }, s.work), h("span", null, plural(s.work, "virkedag", "virkedager"))),
     line("Kalenderdager", s.total),
     line("Lørdager og søndager", s.weekend),
     line("Helligdager på hverdager", s.redWeekday));
   if (s.holidays.length) {
     mount(list, h("section", { class: "section" },
-      h("div", { class: "section-head" }, h("h2", null, "Helligdager i perioden")),
-      h("div", { class: "list" }, s.holidays.slice(0, 60).map(hd => holidayRow(hd)))));
+      h("div", { class: "section-head" }, h("h3", null, "Helligdager i perioden")),
+      almanac(s.holidays.slice(0, 60).map(hd => holidayItem(hd)), a)));
   }
 }
 
