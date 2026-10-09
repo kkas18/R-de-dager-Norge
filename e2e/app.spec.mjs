@@ -33,6 +33,7 @@ test.describe("every view, both themes, two widths", () => {
           await page.goto("/#" + view);
           await expect(page.locator("#v-" + view)).toBeVisible();
           await page.waitForFunction(() => document.getAnimations().every(a => a.playState !== "running"));
+          await expect(page.locator("#openSettings")).toBeInViewport();
           const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
           expect(overflow, `horizontal overflow on ${view}`).toBeLessThanOrEqual(0);
 

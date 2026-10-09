@@ -29,6 +29,8 @@ prioritering og handlinger som faktisk henger sammen.
    dato og ukenummer ligger under navnet og forsvinner ikke på smale skjermer.
    Den aktive fanen får en blekkstrek. På store skjermer følger topptekst,
    innhold og bunnmeny samme sentrerte bredde.
+   Toppmenyen er fast, med høyde reservert i innholdet, slik at
+   innstillingsknappen alltid er tilgjengelig ved sidebytte og rulling.
 3. **Ett tips som kan brukes.** «Litt ferie. Mer fri.» forklarer én konkret
    mulighet og åpner planleggeren med riktig år og én feriedag per forslag,
    også når neste mulighet ligger neste år. Hvis ingen slik mulighet finnes,
