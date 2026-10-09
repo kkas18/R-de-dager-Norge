@@ -3,6 +3,8 @@ package no.rodedager.app;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.database.Cursor;
+import android.provider.ContactsContract;
 import android.os.Bundle;
 import android.os.Build;
 import android.webkit.*;
@@ -12,6 +14,7 @@ import android.widget.Toast;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import org.json.JSONObject;
 
 /** Offline packaged web app. Only bundled HTTPS-origin content may reach the bridge. */
 public final class MainActivity extends Activity {
@@ -22,6 +25,7 @@ public final class MainActivity extends Activity {
     private String pendingExport;
     private String pendingMime;
     private String pendingName;
+    private String pendingContactRequest;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -108,6 +112,24 @@ public final class MainActivity extends Activity {
         return new WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
     }
     private final class ExportBridge {
+        @JavascriptInterface public void pickPhoneNumber(String requestId) {
+            if (requestId == null || !requestId.matches("[a-zA-Z0-9-]{1,80}")) return;
+            runOnUiThread(() -> {
+                if (web.getUrl() == null || !web.getUrl().startsWith(BASE)) return;
+                if (pendingContactRequest != null) {
+                    contactResult(requestId, null, null, "busy");
+                    return;
+                }
+                pendingContactRequest = requestId;
+                Intent pick = new Intent(Intent.ACTION_PICK);
+                pick.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
+                try { startActivityForResult(pick, 13); }
+                catch (Exception e) {
+                    pendingContactRequest = null;
+                    contactResult(requestId, null, null, "unavailable");
+                }
+            });
+        }
         @JavascriptInterface public void saveFile(String text, String name, String mime) {
             if (text == null || text.length() > 5000000 || !(mime.equals("application/json") || mime.equals("text/calendar"))) return;
             runOnUiThread(() -> {
@@ -122,8 +144,40 @@ public final class MainActivity extends Activity {
             });
         }
     }
+    private void contactResult(String requestId, String name, String number, String error) {
+        try {
+            JSONObject value = new JSONObject();
+            value.put("requestId", requestId);
+            value.put("name", name == null ? "" : name);
+            value.put("tel", number == null ? "" : number);
+            if (error != null) value.put("error", error);
+            String json = value.toString().replace("\u2028", "\\u2028").replace("\u2029", "\\u2029");
+            runOnUiThread(() -> {
+                if (!isFinishing() && !isDestroyed() && web.getUrl() != null && web.getUrl().startsWith(BASE)) {
+                    web.evaluateJavascript("window.dispatchEvent(new CustomEvent('rd:contact-picked',{detail:" + json + "}))", null);
+                }
+            });
+        } catch (Exception ignored) { /* No contact data enters logs. */ }
+    }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == 13) {
+            final String requestId = pendingContactRequest;
+            pendingContactRequest = null;
+            if (requestId == null) return;
+            Uri uri = result == RESULT_OK && data != null ? data.getData() : null;
+            if (uri == null) { contactResult(requestId, null, null, null); return; }
+            if (!"content".equals(uri.getScheme())) { contactResult(requestId, null, null, "invalid"); return; }
+            new Thread(() -> {
+                String[] columns = { ContactsContract.CommonDataKinds.Phone.NUMBER, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME };
+                try (Cursor cursor = getContentResolver().query(uri, columns, null, null, null)) {
+                    if (cursor == null || !cursor.moveToFirst()) { contactResult(requestId, null, null, "empty"); return; }
+                    String phone = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    String name = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                    contactResult(requestId, name, phone, phone == null || phone.trim().isEmpty() ? "empty" : null);
+                } catch (Exception e) { contactResult(requestId, null, null, "unreadable"); }
+            }, "contact-selection").start();
+        }
         if (request == 12 && fileCallback != null) {
             fileCallback.onReceiveValue(result == RESULT_OK && data != null ? new Uri[]{data.getData()} : null);
             fileCallback = null;
