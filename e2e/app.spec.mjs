@@ -269,16 +269,14 @@ test("reduced motion disables page and sheet movement", async ({ page }) => {
 
 test.describe("installation screenshots", () => {
   test.use({ deviceScaleFactor: 2 });
-  test("capture current installation screenshots", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
-  await open(page);
   for (const view of ["idag", "kalender", "planlegg"]) {
-    await page.goto("/#" + view);
-    await page.reload();
-    await expect(page.locator("#v-" + view)).toBeVisible();
-    await page.evaluate(async () => { await document.fonts.ready; scrollTo(0, 0); });
-    await page.screenshot({ path: "screenshots/" + view + ".png" });
+    test("capture " + view, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+      await open(page, view);
+      await page.evaluate(async () => { await document.fonts.ready; });
+      await expect(page.locator("#openSettings")).toBeInViewport();
+      await page.screenshot({ path: "screenshots/" + view + ".png" });
+    });
   }
-  });
 });
