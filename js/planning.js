@@ -1,5 +1,15 @@
 // Pure vacation-plan helpers. Keep the existing rd:plan:<year> storage format.
 import { parseIsoDate, isoDate } from "./dates.js";
+import { bridges } from "./holidays.js";
+
+/** Next useful suggestion; all vacation dates remain in a single budget year. */
+export function featuredPause(from) {
+  for (let year = from.getFullYear(); year <= from.getFullYear() + 2; year++) {
+    const period = bridges(year, 4, from).find(p => p.from >= from);
+    if (period) return period;
+  }
+  return null;
+}
 
 export const planKey = year => "rd:plan:" + year;
 

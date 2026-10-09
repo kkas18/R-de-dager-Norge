@@ -40,6 +40,10 @@ export function haptic(ms = 8) {
 }
 
 export function downloadFile(text, filename, mime) {
+  if (window.RodeDagerAndroid) {
+    window.RodeDagerAndroid.saveFile(text, filename, mime);
+    return;
+  }
   const url = URL.createObjectURL(new Blob([text], { type: mime }));
   const a = h("a", { href: url, download: filename, hidden: true });
   document.body.append(a);

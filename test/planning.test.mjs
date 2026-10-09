@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { date } from "../js/dates.js";
-import { normalizePlan, planBudget, togglePeriod } from "../js/planning.js";
+import { normalizePlan, planBudget, togglePeriod, featuredPause } from "../js/planning.js";
 
 test("old plans retain valid dates, remove duplicates and tolerate damaged data", () => {
   assert.deepEqual(normalizePlan(null), { total: 25, days: [] });
@@ -25,4 +25,15 @@ test("lowering an existing budget exposes overspending without removing dates", 
   const plan = normalizePlan({ total: 0, days: ["2026-12-24"] });
   assert.equal(planBudget(plan).left, -1);
   assert.deepEqual(plan.days, ["2026-12-24"]);
+});
+
+test("featured break is future, has exact holiday gain and a single budget year", () => {
+  const p = featuredPause(date(2026,9,9));
+  assert.equal(p.total,10);
+  assert.equal(p.vacation,4);
+  assert.deepEqual(p.take.map(d => d.getDate()),[28,29,30,31]);
+  assert.ok(p.take.every(d => d.getFullYear() === 2026));
+  const rollover = featuredPause(date(2027,11,31));
+  assert.ok(rollover.from >= date(2027,11,31));
+  assert.ok(rollover.take.every(d => d.getFullYear() === 2028));
 });

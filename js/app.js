@@ -4,14 +4,14 @@ import { $, reducedMotion } from "./dom.js";
 import { WEEKDAYS, MONTHS_SHORT, isoWeek, startOfDay } from "./dates.js";
 import { prefs, onPeopleChange, onPlanChange, mirrorPeople } from "./store.js";
 import { sheetIsOpen, toast } from "./ui.js";
-import { renderToday } from "./views/today.js";
+import { renderPause as renderToday } from "./views/pause.js";
 import { initCalendar, renderCalendar, updateTodayButton } from "./views/calendar.js";
 import { initPeople, renderPeople, leavePeople } from "./views/people.js";
 import { initPlan, renderPlan } from "./views/plan.js";
 import { initSettings, initInstall, checkReminders, registerPeriodicSync, renderNotificationState } from "./views/settings.js";
 
-const TABS = ["idag", "kalender", "personer", "planlegg"];
-const VIEWS = [...TABS, "om"];
+const TABS = ["idag", "kalender", "planlegg"];
+const VIEWS = [...TABS, "personer", "om"];
 // Old tab names from v1 map onto the new structure.
 const LEGACY = { na: "idag", kal: "kalender", mine: "personer", kontakter: "personer", beregn: "planlegg" };
 
@@ -39,7 +39,7 @@ function show(name, { animate = true, focus = false } = {}) {
   if (name !== "om") prefs.set("tab", name);
 
   for (const btn of document.querySelectorAll(".tabbar [role=tab]")) {
-    const on = btn.dataset.view === name;
+    const on = btn.dataset.view === (name === "personer" ? "planlegg" : name);
     btn.setAttribute("aria-selected", String(on));
     btn.tabIndex = on || (name === "om" && btn.dataset.view === "idag") ? 0 : -1;
   }
@@ -126,7 +126,7 @@ function renderAll() {
 
 /** Registers the worker and offers updates. Never reloads unless the user asked. */
 function initServiceWorker() {
-  if (!("serviceWorker" in navigator)) return;
+  if (window.RodeDagerAndroid || !("serviceWorker" in navigator)) return;
   let userAccepted = false;
   const offer = worker => toast("En ny versjon er klar.", {
     sticky: true,

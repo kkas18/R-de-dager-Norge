@@ -1,3 +1,15 @@
 node_modules/
 test-results/
 playwright-report/
+
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/signing/
+*.jks
+*.keystore
+*.apk
+*.idsig
+
+__pycache__/

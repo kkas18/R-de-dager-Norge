@@ -1,4 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Røde dager">
-  <rect width="64" height="64" rx="14.40" fill="#F4F1E8"/>
-  <path fill="#B3122E" transform="translate(4.986 48.000) scale(0.04961 -0.04961)" d="M81 0V55L232 68H324L473 55V0ZM213 0Q213 43 213.5 85.5Q214 128 214.0 171.0Q214 214 214 256V543L96 528V586L314 645L346 640L344 429V256Q344 214 344.5 171.0Q345 128 345.0 85.5Q345 43 346 0ZM637 0 632 20 951 555 945 510 941 536H558V640H1008V575L768 0Z"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><rect width="108" height="108" fill="#10283F"/><path fill="#F7F5EF" d="M22 72 43 35 56 54 67 43 87 72Z"/><path fill="#10283F" d="M43 46 50 56 44 54 39 57Z"/><path fill="#BA3546" d="M24 79h60v5H24z"/></svg>
