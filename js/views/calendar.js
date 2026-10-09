@@ -134,7 +134,7 @@ function renderMonth(dir) {
     .sort((a, b) => a.d - b.d);
   $("#monthListHead").textContent = "Merkedager i " + MONTHS[m];
   mount($("#monthList"), items.length ? items.map(x => x.row)
-    : h("p", { class: "alm-empty" }, "Ingen merkedager i " + MONTHS[m] + ". Bare vanlige søndager."));
+    : h("p", { class: "alm-empty" }, "Ingen merkedager denne måneden."));
 
   const s = yearSummary(y);
   $("#yearNote").textContent = "I " + y + " faller " + s.onWeekdays + " av " + s.count +

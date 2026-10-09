@@ -53,13 +53,12 @@
         <button class="icon-btn" id="calNext" type="button" aria-label="Neste måned"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <div class="grid" id="grid" aria-live="polite"></div>
-      <p class="legend"><span><i class="k-mark" aria-hidden="true"></i>Helligdag</span><span><i class="k-mark grey" aria-hidden="true"></i>Merkedag</span><span><i class="k-own" aria-hidden="true"></i>Dine dager</span><span><i class="k-ring" aria-hidden="true"></i>I dag</span><span><i class="k-vacation" aria-hidden="true"></i>Planlagt ferie</span></p>
+      <details class="quiet-details"><summary>Symbolforklaring</summary>      <p class="legend"><span><i class="k-mark" aria-hidden="true"></i>Helligdag</span><span><i class="k-mark grey" aria-hidden="true"></i>Merkedag</span><span><i class="k-own" aria-hidden="true"></i>Dine dager</span><span><i class="k-ring" aria-hidden="true"></i>I dag</span><span><i class="k-vacation" aria-hidden="true"></i>Planlagt ferie</span></p></details>
       <section class="section" aria-labelledby="monthListHead">
         <div class="section-head"><h3 id="monthListHead">Merkedager</h3></div>
         <div id="monthList"></div>
       </section>
-      <p class="cal-note" id="yearNote"></p>
-      <button class="link" id="yearAllBtn" type="button">Alle merkedager</button>
+      <details class="quiet-details"><summary>Årets helligdager</summary><p class="cal-note" id="yearNote"></p><button class="link" id="yearAllBtn" type="button">Alle merkedager</button></details>
     </div>
 
     <div id="yearView" hidden>
@@ -94,25 +93,18 @@
   <section class="view" id="v-planlegg" role="tabpanel" aria-labelledby="tab-planlegg" tabindex="-1">
     <div class="page-head"><h2 class="page-title">Mine planer</h2><a class="link" id="openPeople" href="#personer">Dine merkedager →</a></div>
     <div class="tabs" id="planMode" role="group" aria-label="Verktøy">
-      <button type="button" data-mode="bridges" aria-pressed="true">Inneklemte dager</button>
+      <button type="button" data-mode="bridges" aria-pressed="true">Forslag</button>
       <button type="button" data-mode="range" aria-pressed="false">Virkedager</button>
     </div>
 
     <div id="planBridges">
-      <p class="sentence">
-        Forslag for <label class="visually-hidden" for="bYear">År</label><select class="inline-select" id="bYear"></select>
-        med inntil <label class="visually-hidden" for="bMax">Feriedager per forslag</label><select class="inline-select" id="bMax">
-          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-          <option value="4">4</option><option value="5">5</option><option value="8">8</option>
-        </select> feriedager.
-      </p>
-      <p class="sentence" id="budget" aria-live="polite">
-        Du har <label class="visually-hidden" for="bTotal">Feriedager du har</label><input class="inline-input" id="bTotal" type="number" inputmode="numeric" min="0" max="99">
-        feriedager. <span id="budgetText"></span>
-      </p>
+      <div class="plan-filters">
+        <label for="bYear">År<select class="inline-select" id="bYear"></select></label>
+        <label for="bMax">Maks feriedager<select class="inline-select" id="bMax"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="8">8</option></select></label>
+      </div>
+      <p class="budget-block" id="budget" aria-live="polite"><label for="bTotal">Årsbudsjett</label><input class="inline-input" id="bTotal" type="number" inputmode="numeric" min="0" max="99"><span id="budgetText"></span></p>
       <progress class="budget-meter" id="budgetMeter" value="0" max="25" aria-label="Planlagte feriedager av feriebudsjettet"></progress>
       <p class="small muted" id="plannedDays" hidden></p>
-      <p class="legend"><span><i class="k-mark" aria-hidden="true"></i>Rødt tall: helligdag</span><span><i class="k-ring" aria-hidden="true"></i>Ring: du tar fri</span></p>
       <div id="planList"></div>
     </div>
 
@@ -188,13 +180,13 @@
 
 <nav class="tabbar" role="tablist" aria-label="Hovedmeny" data-app-root>
   <button role="tab" id="tab-idag" aria-controls="v-idag" data-view="idag" aria-selected="true" type="button">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="3.5" width="14" height="17" rx="1"/><path d="M5 7.5h14"/><path d="m7 16 4-5 3 3 3-5"/></svg>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 19 7-13 4 7 3-4 4 10H3Z"/><path d="m8 10 2 2 2-2"/></svg>
     Fridager</button>
   <button role="tab" id="tab-kalender" aria-controls="v-kalender" data-view="kalender" aria-selected="false" tabindex="-1" type="button">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="16" rx="1"/><path d="M3.5 9.5h17M8 2.8v3.4M16 2.8v3.4"/><path d="M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01" stroke-width="2.2"/></svg>
     Kalender</button>
   <button role="tab" id="tab-planlegg" aria-controls="v-planlegg" data-view="planlegg" aria-selected="false" tabindex="-1" type="button">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h16"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="3"/></svg>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 4h12v17l-6-4-6 4V4Z"/><path d="m9 10 2 2 4-4"/></svg>
     Mine planer</button>
 </nav>
 

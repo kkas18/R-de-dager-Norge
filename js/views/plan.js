@@ -28,7 +28,7 @@ export function initPlan() {
   const t = today();
   mount($("#bYear"), [0, 1, 2, 3].map(i => h("option", { value: t.getFullYear() + i }, t.getFullYear() + i)));
   $("#bYear").addEventListener("change", () => { syncBudgetInput(); renderPlan(); });
-  $("#bMax").value = prefs.get("rd:maxPerPeriod", "3");
+  $("#bMax").value = prefs.get("rd:maxPerPeriod", "4");
   $("#bMax").addEventListener("change", () => { prefs.set("rd:maxPerPeriod", $("#bMax").value); renderPlan(); });
   $("#bTotal").addEventListener("change", () => {
     const y = Number($("#bYear").value), plan = loadPlan(y), n = Number($("#bTotal").value);
@@ -111,8 +111,8 @@ function renderBridges() {
         h("p", { class: "plan-gain" }, h("span", { class: "num" }, p.total), "dager fri"),
         h("p", { class: "plan-cost" }, "for " + p.vacation + " " + plural(p.vacation, "feriedag", "feriedager"))),
       h("p", { class: "plan-range" }, capitalize(formatRange(p.from, p.to))),
-      h("p", { class: "plan-take" }, "Ta fri " + takeText(p) + "."),
-      strip(p),
+      h("details", { class: "quiet-details plan-details" }, h("summary", null, "Datoer og ferie"),
+        h("p", { class: "plan-take" }, "Ta fri " + takeText(p)), strip(p)),
       enough ? null : h("p", { class: "plan-warning", id: "cost-" + p.id },
         "Du trenger " + (added - left) + " flere feriedager i budsjettet."),
       h("div", { class: "link-row" },

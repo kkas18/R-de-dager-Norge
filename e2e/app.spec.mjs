@@ -129,6 +129,7 @@ test("tabs follow the arrow keys", async ({ page }) => {
 
 test("bridge planner hides past periods and tracks the budget", async ({ page }) => {
   await open(page, "planlegg");
+  await page.locator("#bMax").selectOption("1");
   const first = page.locator(".plan").first();
   await expect(first).toContainText("desember");
   await first.getByRole("button", { name: "Planlegg" }).click();
@@ -222,6 +223,7 @@ test("home rolls over to next year's future breaks", async ({ page }) => {
 
 test("vacation plans persist in calendar and cannot exceed the budget", async ({ page }) => {
   await open(page, "planlegg");
+  await page.locator("#bMax").selectOption("1");
   await page.locator("#bTotal").fill("0");
   await page.locator("#bTotal").blur();
   await expect(page.locator(".plan-save").first()).toBeDisabled();
