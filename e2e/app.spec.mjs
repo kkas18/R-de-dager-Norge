@@ -274,3 +274,33 @@ test.describe("installation screenshots", () => {
     });
   }
 });
+
+
+test("Android export bridge receives plans and calendar files", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__files = [];
+    window.RodeDagerAndroid = { saveFile: (text,name,mime) => window.__files.push({text,name,mime}) };
+  });
+  await open(page);
+  await page.locator(".pause-cta").click();
+  await page.getByRole("button", { name: "Lagre planen", exact: true }).click();
+  await page.getByRole("button", { name: "Til telefonens kalender", exact: true }).click();
+  const calendar = await page.evaluate(() => window.__files[0]);
+  expect(calendar.mime).toBe("text/calendar");
+  expect(calendar.text).toContain("BEGIN:VCALENDAR");
+  await page.locator("#sheetClose").click();
+  await page.locator("#openSettings").click();
+  await page.locator("#sBackup").click();
+  const backup = JSON.parse(await page.evaluate(() => window.__files.at(-1).text));
+  expect(backup.planer[2026].days).toHaveLength(4);
+  expect(backup.dager).toHaveLength(3);
+});
+
+test("backup import merges vacation dates without losing an existing plan", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("rd:plan:2026", JSON.stringify({ total:25,days:["2026-12-24"] })));
+  await open(page,"om");
+  const backup = JSON.stringify({app:"rode-dager",dager:[],planer:{2026:{total:20,days:["2026-12-28","bad-date"]}}});
+  await page.locator("#sRestoreFile").setInputFiles({name:"kopi.json",mimeType:"application/json",buffer:Buffer.from(backup)});
+  await expect(page.locator("#toast")).toContainText("Ferieplanene er hentet inn");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("rd:plan:2026")))).toEqual({total:20,days:["2026-12-24","2026-12-28"]});
+});

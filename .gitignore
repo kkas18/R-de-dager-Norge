@@ -11,3 +11,5 @@ android/signing/
 *.keystore
 *.apk
 *.idsig
+
+__pycache__/

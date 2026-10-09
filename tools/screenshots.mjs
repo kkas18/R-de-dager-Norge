@@ -9,7 +9,7 @@ const seed = JSON.stringify([
 ]);
 
 const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
-const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: "nb-NO", colorScheme: "light" });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: "nb-NO", colorScheme: "dark" });
 await page.clock.setFixedTime(new Date("2026-09-27T10:00:00+02:00"));
 await page.addInitScript(s => localStorage.setItem("rd:events", s), seed);
 for (const view of ["idag", "kalender", "planlegg"]) {

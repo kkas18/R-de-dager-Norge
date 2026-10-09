@@ -18,7 +18,7 @@ export function showPause(p) {
     return [h("p", { class: "pause-detail-date" }, formatRange(p.from, p.to)),
       h("p", { class: "muted small" }, "Bruk " + p.vacation + " " + plural(p.vacation, "feriedag", "feriedager") + ". Helger og helligdager er inkludert."),
       h("ol", { class: "pause-days" }, p.days.map(({ d, kind }) => h("li", null,
-        h("span", null, formatDayMonth(d)), h("span", { class: kind === "red" ? "red" : "muted" },
+        h("span", null, formatDayMonth(d)), h("span", { class: kind === "holiday" ? "red" : "muted" },
           kind === "vacation" ? "Ta ferie" : namedRedDay(d)?.name || "Helg")))),
       enough ? null : h("p", { class: "plan-warning" }, "Du har for få feriedager igjen. Endre budsjettet i Mine planer."),
       h("button", { class: "btn-primary btn-block", type: "button", disabled: !enough, onclick: () => {
@@ -32,7 +32,7 @@ export function showPause(p) {
       h("button", { class: "link btn-block", type: "button", onclick: () =>
         downloadFile(periodCalendar(p), "fri-" + isoDate(p.from) + ".ics", "text/calendar") }, "Til telefonens kalender")];
   };
-  openSheet({ eyebrow: "Din pause", title: p.total + " dager fri", body: body() });
+  openSheet({ eyebrow: "Din pause", title: p.total + " dager fri", body: body(), onClose: () => $(".pause-cta")?.focus({ preventScroll: true }) });
 }
 
 export function renderPause() {

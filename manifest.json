@@ -24,10 +24,10 @@
   "shortcuts": [
     { "name": "Kalender", "url": "./#kalender", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Planlegg ferien", "short_name": "Planlegg", "url": "./#planlegg", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Personer", "url": "./#personer", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Dine merkedager", "url": "./#personer", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ],
   "screenshots": [
-    { "src": "screenshots/idag.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Nedtelling til neste helligdag" },
+    { "src": "screenshots/idag.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "En kompakt guide til din neste pause" },
     { "src": "screenshots/kalender.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Månedskalender med røde dager" },
     { "src": "screenshots/planlegg.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Forslag til inneklemte dager" }
   ]
