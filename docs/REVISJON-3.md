@@ -63,7 +63,7 @@ prioritering og handlinger som faktisk henger sammen.
   kalenderbladet, kompakt liste, årsskifte, budsjett, ferie i kalenderen,
   varig lagring og redusert bevegelse. Den eksisterende kontrollen dekker
   lyse/mørke temaer, 320/390 px, axe, tastatur, historikk og bruk uten nett.
-- GitHub CI har bestått alle 23 nettlesertester. Ingen alvorlige eller kritiske
+- GitHub CI har bestått alle 25 nettlesertester. Ingen alvorlige eller kritiske
   axe-funn ble rapportert på de testede sidene i begge temaer ved 320/390 px.
 - Nye installasjonsskjermbilder produseres som CI-artefakter. Skjermbildene fra
   første kjøring er visuelt gjennomgått i begge temaer.
@@ -71,3 +71,6 @@ prioritering og handlinger som faktisk henger sammen.
 Nettlesertestene er kjørt i GitHub CI. Ingen fysisk Samsung-telefon er testet.
 Det nye visuelle uttrykket er kontrollert i CI-skjermbilder; animasjonenes
 opplevde kvalitet er fortsatt ikke vurdert på en fysisk telefon.
+
+Installasjonsbildene i `screenshots/` viser den ferdige versjonen ved 390 px bredde,
+levert i dobbel oppløsning (780 × 1688 px).
