@@ -12,6 +12,7 @@ import { peopleCalendar } from "../ics.js";
 import { loadPeople, savePeople, findPerson, upsertPerson, removePeople, prefs } from "../store.js";
 import { openSheet, closeSheet, toast, undoable } from "../ui.js";
 import { almanac, personItem, setOpenPerson, today } from "./shared.js";
+import { canPickPhone, pickPhone } from "../contacts.js";
 
 let selecting = false;
 const selection = new Set();
@@ -174,6 +175,7 @@ const check = (id, label, checked) =>
   h("label", { class: "check-row" }, h("input", { type: "checkbox", id, checked: !!checked }), label);
 
 function personForm(existing, prefill = {}) {
+  const contactRequest = new AbortController();
   const isNew = !existing;
   const p = existing || normalizePerson({ id: newId(), name: prefill.name || prefill.tel || "Ny", type: "bursdag", remind: 1, ...prefill });
   const dateValue = hasDate(p) ? isoDate(new Date(p.year || 2000, p.month - 1, p.day)) : "";
@@ -188,7 +190,27 @@ function personForm(existing, prefill = {}) {
       check("fYear", "Vis alder eller antall år", isNew || p.year !== null)),
     h("details", { class: "more-fields", open: p.tel ? true : null },
       h("summary", null, "Telefonnummer"),
-      h("div", { class: "form" }, fld("Telefon", "fTel", h("input", { id: "fTel", type: "tel", autocomplete: "tel", value: p.tel, placeholder: "Valgfritt" })))));
+      h("div", { class: "form" }, fld("Telefon", "fTel", h("input", { id: "fTel", type: "tel", autocomplete: "tel", value: p.tel, placeholder: "Valgfritt" })),
+        canPickPhone() ? h("button", { id: "fPickContact", class: "link", type: "button", onclick: async e => {
+          const button = e.currentTarget;
+          button.disabled = true;
+          try {
+            const contact = await pickPhone({ signal: contactRequest.signal });
+            if (!contact || !form.isConnected || contactRequest.signal.aborted) return;
+            const phone = $("#fTel", form);
+            phone.value = contact.numbers[0];
+            const name = $("#fName", form);
+            if (!name.value.trim() && contact.name) name.value = contact.name;
+            mount($("#fContactNumbers", form), contact.numbers.length > 1 ? fld("Velg nummer", "fPickedNumber",
+              h("select", { id: "fPickedNumber", onchange: event => { phone.value = event.target.value; } },
+                contact.numbers.map(n => h("option", { value: n }, n)))) : null);
+            phone.dispatchEvent(new Event("input", { bubbles: true }));
+            phone.focus();
+          } catch {
+            if (!contactRequest.signal.aborted) toast("Kontaktlisten kunne ikke åpnes. Du kan skrive nummeret selv.");
+          } finally { button.disabled = false; }
+        } }, "Velg fra kontakter") : null,
+        h("div", { id: "fContactNumbers" }))));
 
   const save = e => {
     e.preventDefault();
@@ -215,6 +237,7 @@ function personForm(existing, prefill = {}) {
   openSheet({
     eyebrow: isNew ? "Ny dag" : "Endre",
     title: isNew ? "Hvem eller hva?" : p.name,
+    onClose: () => contactRequest.abort(),
     body: [form, h("button", { class: "btn-primary btn-block", type: "submit", form: "personForm" }, "Lagre")]
   });
 }

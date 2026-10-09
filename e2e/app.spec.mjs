@@ -306,3 +306,77 @@ test("backup import merges vacation dates without losing an existing plan", asyn
   await expect(page.locator("#toast")).toContainText("Ferieplanene er hentet inn");
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("rd:plan:2026")))).toEqual({total:20,days:["2026-12-24","2026-12-28"]});
 });
+
+
+test("native contact picker fills number and an empty name, and saves it", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.RodeDagerAndroid = { pickPhoneNumber: id => { window.__contactRequest = id; } };
+  });
+  await open(page,"personer",{seed:false});
+  await page.locator("#pAdd").click();
+  await page.locator("#fDate").fill("1990-10-09");
+  await page.locator(".more-fields summary").click();
+  await page.locator("#fPickContact").click();
+  await expect(page.locator("#fPickContact")).toBeDisabled();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("rd:contact-picked", {detail:{requestId:window.__contactRequest,name:"Anne O'Neil",tel:"+47 912 34 567"}})));
+  await expect(page.locator("#fName")).toHaveValue("Anne O'Neil");
+  await expect(page.locator("#fTel")).toHaveValue("+47 912 34 567");
+  await expect(page.locator("#fDate")).toHaveValue("1990-10-09");
+  await expect(page.locator("#fPickContact")).toBeEnabled();
+  const axe = await new AxeBuilder({page}).include("#sheet").withTags(["wcag2a","wcag2aa","wcag22aa"]).analyze();
+  expect(axe.violations.filter(v => ["serious","critical"].includes(v.impact)).map(v=>v.id)).toEqual([]);
+  await page.getByRole("button",{name:"Lagre",exact:true}).click();
+  const person = await page.evaluate(() => JSON.parse(localStorage.getItem("rd:events"))[0]);
+  expect(person.name).toBe("Anne O'Neil");
+  expect(person.tel).toBe("+47 912 34 567");
+});
+
+test("native cancel and picker errors preserve typed values", async ({ page }) => {
+  await page.addInitScript(() => { window.RodeDagerAndroid = {pickPhoneNumber:id=>{window.__contactRequest=id;}}; });
+  await open(page,"personer",{seed:false});
+  await page.locator("#pAdd").click();
+  await page.locator("#fName").fill("Eget navn");
+  await page.locator(".more-fields summary").click();
+  await page.locator("#fTel").fill("40000000");
+  await page.locator("#fPickContact").click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("rd:contact-picked",{detail:{requestId:window.__contactRequest,tel:""}})));
+  await expect(page.locator("#fPickContact")).toBeEnabled();
+  await expect(page.locator("#fTel")).toHaveValue("40000000");
+  await page.locator("#fPickContact").click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("rd:contact-picked",{detail:{requestId:window.__contactRequest,error:"unreadable"}})));
+  await expect(page.locator("#fPickContact")).toBeEnabled();
+  await expect(page.locator("#toast")).toContainText("Kontaktlisten kunne ikke åpnes");
+  await page.locator("#fPickContact").click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("rd:contact-picked",{detail:{requestId:window.__contactRequest,name:"Fra telefon",tel:"90000000"}})));
+  await expect(page.locator("#fName")).toHaveValue("Eget navn");
+  await expect(page.locator("#fTel")).toHaveValue("90000000");
+});
+
+test("late contact results cannot fill a different form", async ({ page }) => {
+  await page.addInitScript(() => { window.RodeDagerAndroid = {pickPhoneNumber:id=>{window.__contactRequest=id;}}; });
+  await open(page,"personer",{seed:false});
+  await page.locator("#pAdd").click();
+  await page.locator(".more-fields summary").click();
+  await page.locator("#fPickContact").click();
+  const oldId = await page.evaluate(() => window.__contactRequest);
+  await page.locator("#sheetClose").click();
+  await page.locator("#pAdd").click();
+  await page.locator(".more-fields summary").click();
+  await page.locator("#fPickContact").click();
+  await page.evaluate(id => window.dispatchEvent(new CustomEvent("rd:contact-picked",{detail:{requestId:id,name:"Gammelt valg",tel:"11111111"}})),oldId);
+  await expect(page.locator("#fTel")).toHaveValue("");
+  await expect(page.locator("#fPickContact")).toBeDisabled();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("rd:contact-picked",{detail:{requestId:window.__contactRequest,name:"Riktig valg",tel:"22222222"}})));
+  await expect(page.locator("#fTel")).toHaveValue("22222222");
+});
+
+test("browser picker allows choosing between a contact's phone numbers", async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(navigator,"contacts",{value:{getProperties:async()=>["name","tel"],select:async()=>[{name:["Kari"],tel:["+47 11111111","+47 22222222"]}]}}));
+  await open(page,"personer",{seed:false});
+  await page.locator("#pAdd").click();
+  await page.locator(".more-fields summary").click();
+  await page.locator("#fPickContact").click();
+  await page.locator("#fPickedNumber").selectOption("+47 22222222");
+  await expect(page.locator("#fTel")).toHaveValue("+47 22222222");
+  await expect(page.locator("#fName")).toHaveValue("Kari");
+});

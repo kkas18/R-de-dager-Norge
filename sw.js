@@ -23,6 +23,7 @@ const SHELL = [
   "fonts/source-sans-3-400.woff2",
   "fonts/source-sans-3-600.woff2",
   "js/app.js",
+  "js/contacts.js",
   "js/dates.js",
   "js/dom.js",
   "js/holidays.js",

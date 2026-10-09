@@ -4,6 +4,7 @@ ANDROID_SDK_ROOT, RD_KEYSTORE, RD_STORE_PASS_FILE must be supplied.
 The signing key is private and must never be committed.
 """
 import os
+import re
 import shutil
 import subprocess
 import zipfile
@@ -42,7 +43,8 @@ run(tools / 'd8', '--lib', platform, '--min-api', '26', '--output', build / 'dex
 with zipfile.ZipFile(build / 'unsigned.apk', 'a', zipfile.ZIP_DEFLATED) as archive:
     archive.write(build / 'dex/classes.dex', 'classes.dex')
 run(tools / 'zipalign', '-f', '-P', '16', '4', build / 'unsigned.apk', build / 'aligned.apk')
-apk = build / 'Rode-dager-5.0.0.apk'
+version = re.search(r'VERSION = "([0-9.]+)"', (root / 'js/version.js').read_text()).group(1)
+apk = build / ('Rode-dager-' + version + '.apk')
 run(tools / 'apksigner', 'sign', '--ks', key, '--ks-key-alias', 'rode-dager',
     '--ks-pass', 'file:' + str(password),
     '--out', apk, build / 'aligned.apk')
