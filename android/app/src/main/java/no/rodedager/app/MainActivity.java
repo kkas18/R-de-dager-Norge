@@ -87,6 +87,10 @@ public final class MainActivity extends Activity {
                 return true;
             }
         });
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBack);
+        }
         web.loadUrl(BASE + "index.html");
     }
     private static String mime(String path) {
@@ -134,12 +138,13 @@ public final class MainActivity extends Activity {
             pendingExport = null;
         }
     }
-    @Override public void onBackPressed() {
+    @Override public void onBackPressed() { handleBack(); }
+    private void handleBack() {
         web.evaluateJavascript("(function(){if(document.getElementById('sheet').classList.contains('is-open')){history.back();return 'handled'}if(location.hash!=='#idag'){location.hash='idag';return 'handled'}return 'exit'})()", result -> {
-            if ("\"exit\"".equals(result)) super.onBackPressed();
+            if ("\"exit\"".equals(result)) finish();
         });
     }
     @Override protected void onPause() { web.onPause(); super.onPause(); }
-    @Override protected void onResume() { super.onResume(); if(web != null) web.onResume(); }
+    @Override protected void onResume() { super.onResume(); if(web != null) { web.onResume(); web.evaluateJavascript("document.dispatchEvent(new Event('visibilitychange'))", null); } }
     @Override protected void onDestroy() { if(fileCallback != null) fileCallback.onReceiveValue(null); web.removeJavascriptInterface("RodeDagerAndroid"); web.destroy(); super.onDestroy(); }
 }

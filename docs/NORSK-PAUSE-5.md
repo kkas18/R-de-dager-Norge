@@ -23,3 +23,11 @@ Forsiden tilpasses 320–430 px. Bildet blir lavere ved korte skjermer, og hoved
 Installer JDK17 og Android SDK platform/build-tools35.0.0. Sett ANDROID_SDK_ROOT, RD_KEYSTORE og RD_STORE_PASS_FILE til lokale stier. Aliaset må være rode-dager. Kjør `python3 tools/build-android.py`. Bygget bruker aapt2, javac, d8, zipalign og apksigner. APK havner i android/build. Signatur og zipjustering sjekkes automatisk. Ingen Gradle-nedlastinger kreves.
 
 Nettversjonen bruker fortsatt PWA-installasjon og service worker. Native utgaver oppdateres ved å installere en nyere APK signert med samme nøkkel.
+
+## Verifisering
+
+37 enhetstester, lint og helligdagsfeed består. 26 nettlesertester kontrollerer begge temaer ved 320/390 px, kompakt forside ved 360 × 700, axe, tastatur, datolister, lagring av ferie, import, eksportbro, redusert bevegelse og offline bilde. Den lokale nettleseren blokkeres av kjøremiljøets socket-regler; testene kjøres i GitHub Actions. Skjermbilder er kontrollert visuelt. Native APK er kompilert med SDK35/JDK17, og signatur/zipjustering samt pakkede kilder kontrolleres lokalt. Ingen fysisk Samsung eller Android-emulator er testet i denne økten. Android 13+ bruker OnBackInvokedCallback; eldre Android bruker onBackPressed.
+
+Androids lokale HTTPS-ressurser og Tilbake-API følger dokumenterte prinsipper: https://developer.android.com/develop/ui/views/layout/webapps/load-local-content og https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture .
+
+Godkjent skjermtestkjøring for den ferdige appkoden: https://github.com/kkas18/R-de-dager-Norge/actions/runs/37982350998 (37 enhetstester og 26 nettlesertester bestått). Installasjonsbildene i screenshots/ er hentet fra denne kjøringen.
