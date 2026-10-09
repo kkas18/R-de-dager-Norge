@@ -5,7 +5,7 @@ import { VERSION } from "../version.js";
 import { mergeImport } from "../people.js";
 import { runReminders, NOTIFIED_KEY } from "../reminders.js";
 import { kvGet, kvSet } from "../kv.js";
-import { loadPeople, savePeople, prefs } from "../store.js";
+import { loadPeople, savePeople, prefs, loadPlan, savePlan } from "../store.js";
 import { toast } from "../ui.js";
 import { exportIcs } from "./people.js";
 import { today } from "./shared.js";
@@ -14,12 +14,14 @@ import { today } from "./shared.js";
 export function applyTheme(choice) {
   const root = document.documentElement;
   if (choice === "light" || choice === "dark") root.dataset.theme = choice;
-  else delete root.dataset.theme;
+  else root.dataset.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function initSettings({ onChange }) {
   const theme = $("#sTheme");
-  theme.value = prefs.get("theme", "system");
+  theme.value = prefs.get("theme", "dark");
+  applyTheme(theme.value);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (theme.value === "system") applyTheme("system"); });
   theme.addEventListener("change", () => { prefs.set("theme", theme.value); applyTheme(theme.value); });
 
   const sunday = $("#sSunday");
@@ -37,14 +39,23 @@ export function initSettings({ onChange }) {
   });
 
   const feed = new URL("helligdager.ics", location.href);
-  $("#sFeedSubscribe").href = "webcal://" + feed.host + feed.pathname;
+  $("#sFeedSubscribe").href = "webcal://kkas18.github.io/R-de-dager-Norge/helligdager.ics";
+  if (window.RodeDagerAndroid) {
+    $("#sFeedDownload").addEventListener("click", async e => {
+      e.preventDefault();
+      downloadFile(await (await fetch(feed)).text(), "helligdager.ics", "text/calendar");
+    });
+  }
   $("#sFeedDownload").href = feed.pathname;
 
   $("#sIcsAll").addEventListener("click", () => exportIcs(loadPeople(), "mine-dager"));
   $("#sBackup").addEventListener("click", () => {
     const list = loadPeople();
-    if (!list.length) { toast("Ingenting å ta kopi av ennå."); return; }
-    downloadFile(JSON.stringify({ app: "rode-dager", versjon: VERSION, dager: list }, null, 2),
+    const plans = {};
+    for (let year = 2020; year <= 2100; year++) {
+      if (prefs.get("rd:plan:" + year, null) !== null) plans[year] = loadPlan(year);
+    }
+    downloadFile(JSON.stringify({ app: "rode-dager", versjon: VERSION, dager: list, planer: plans }, null, 2),
       "rode-dager-kopi.json", "application/json");
   });
   $("#sRestore").addEventListener("click", () => $("#sRestoreFile").click());
@@ -58,8 +69,16 @@ export function initSettings({ onChange }) {
       if (!Array.isArray(incoming)) throw new Error("Ukjent format");
       const { list, added, skipped } = mergeImport(loadPeople(), incoming);
       savePeople(list);
+      if (data?.app === "rode-dager" && data.planer && typeof data.planer === "object") {
+        for (const [key, value] of Object.entries(data.planer)) {
+          const year = Number(key);
+          if (!Number.isInteger(year) || year < 2020 || year > 2100) continue;
+          const current = loadPlan(year);
+          savePlan(year, { total: value.total, days: [...current.days, ...(Array.isArray(value.days) ? value.days : [])] });
+        }
+      }
       toast(added ? "Hentet inn " + added + "." + (skipped ? " " + skipped + " ugyldige ble hoppet over." : "")
-        : "Alt lå der fra før.");
+        : data?.planer ? "Ferieplanene er hentet inn." : "Alt lå der fra før.");
     } catch {
       toast("Filen kunne ikke leses.");
     }
@@ -72,7 +91,7 @@ export function initSettings({ onChange }) {
 export function renderNotificationState() {
   const status = $("#sNotifyStatus"), btn = $("#sNotify");
   if (!("Notification" in window)) {
-    status.textContent = "Nettleseren støtter ikke varsler. Legg dagene i kalenderen for å få alarm.";
+    status.textContent = "Legg merkedager i telefonens kalender for å få alarm.";
     btn.hidden = true;
     return;
   }

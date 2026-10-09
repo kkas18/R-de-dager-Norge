@@ -1,6 +1,6 @@
 {
   "name": "rode-dager",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "private": true,
   "description": "Norske røde dager, virkedager og inneklemte dager. Installerbar PWA uten byggesteg.",
   "type": "module",

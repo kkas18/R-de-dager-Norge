@@ -27,6 +27,7 @@ test.describe("every view, both themes, two widths", () => {
     for (const width of [390, 320]) {
       test(`${scheme} ${width}px`, async ({ page }, info) => {
         await page.emulateMedia({ colorScheme: scheme });
+        await page.addInitScript(scheme => localStorage.setItem("theme", scheme), scheme);
         await page.setViewportSize({ width, height: 800 });
         const errors = await open(page);
         for (const view of VIEWS) {
@@ -63,11 +64,13 @@ test("calendar cells are at least 40px wide on a 320px screen", async ({ page })
   expect(box.width).toBeGreaterThanOrEqual(40);
 });
 
-test("the leaf shows første juledag in 89 days on 27 September 2026", async ({ page }) => {
+test("home shows a real Christmas break and fits compact phones", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 700 });
   await open(page);
-  await expect(page.locator(".leaf-day")).toHaveText("25");
-  await expect(page.locator(".leaf-name")).toHaveText("Første juledag");
-  await expect(page.locator(".leaf-count")).toHaveText("Om 89 dager.");
+  await expect(page.locator(".pause-title")).toHaveText("10 dagerhelt fri.");
+  await expect(page.locator(".pause-stats")).toContainText("4feriedager");
+  await expect(page.locator(".pause-holiday")).toBeInViewport();
+  expect(await page.locator(".pause-landscape").evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
 });
 
 test("add a person, see it everywhere, delete it and undo", async ({ page }) => {
@@ -78,10 +81,8 @@ test("add a person, see it everywhere, delete it and undo", async ({ page }) => 
   await page.getByRole("button", { name: "Lagre" }).click();
   await expect(page.locator("#pList")).toContainText("Per Test");
 
-  await page.locator("#tab-idag").click();
-  await expect(page.locator("#peopleSoonList")).toContainText("Per Test");
-
-  await page.locator("#tab-personer").click();
+  await page.locator("#tab-planlegg").click();
+  await page.locator("#openPeople").click();
   await page.locator("#pList .alm-row", { hasText: "Per Test" }).click();
   await page.getByRole("button", { name: "Slett" }).click();
   await expect(page.locator("#pList")).not.toContainText("Per Test");
@@ -97,7 +98,7 @@ test("restore keeps undated contacts and never runs injected markup", async ({ p
   ] });
   await page.locator("#sRestoreFile").setInputFiles({ name: "kopi.json", mimeType: "application/json", buffer: Buffer.from(backup) });
   await expect(page.locator("#toast")).toContainText("Hentet inn 2");
-  await page.locator("#tab-personer").click();
+  await page.goto("/#personer");
   await expect(page.locator("#pList")).toContainText("Uten dato");
   await expect(page.locator("#pList")).toContainText("<img src=x");
   expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
@@ -105,7 +106,7 @@ test("restore keeps undated contacts and never runs injected markup", async ({ p
 
 test("sheet traps focus, closes on Escape and returns focus", async ({ page }) => {
   await open(page);
-  const trigger = page.locator("#comingList .alm-row").first();
+  const trigger = page.locator(".pause-cta");
   await trigger.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("#sheet")).toHaveClass(/is-open/);
@@ -154,7 +155,8 @@ test("works offline after the first visit", async ({ page, context }) => {
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.locator(".leaf-name")).toHaveText("Første juledag");
+  await expect(page.locator(".pause-holiday")).toContainText("Første juledag");
+  expect(await page.locator(".pause-landscape").evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
   await context.setOffline(false);
 });
 
@@ -195,34 +197,26 @@ test("a reload with a sheet open leaves no dead Back step", async ({ page }) => 
   expect(await page.evaluate(() => history.state && history.state.sheet)).toBeFalsy();
 });
 
-test("rows tell screen readers the date and when it is", async ({ page }) => {
+test("home details save and remove a plan without losing the sheet", async ({ page }) => {
   await open(page);
-  await expect(page.locator("#peopleSoonList .alm-row").first()).toHaveAttribute("aria-label", /Kari Nordmann, bursdag 3\. oktober · fyller 38, lørdag, om 6 dager/);
-  await expect(page.locator("#comingList .alm-row").first()).toHaveAttribute("aria-label", /Julaften, torsdag 24\. desember, ikke rød dag, om 88 dager/);
-});
-
-test("today has a labelled holiday, day details and a compact expandable agenda", async ({ page }) => {
-  await open(page);
-  await expect(page.locator(".leaf-caption")).toContainText("Neste helligdag");
-  await page.locator(".leaf-action").click();
-  await expect(page.locator("#sheetTitle")).toContainText("25. desember 2026");
+  await page.locator(".pause-cta").click();
+  await expect(page.locator("#sheetTitle")).toHaveText("10 dager fri");
+  await expect(page.locator(".pause-days li")).toHaveCount(10);
+  await page.getByRole("button", { name: "Lagre planen", exact: true }).click();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("rd:plan:2026")).days)).toEqual(["2026-12-28","2026-12-29","2026-12-30","2026-12-31"]);
+  await page.getByRole("button", { name: "Fjern planen", exact: true }).click();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("rd:plan:2026")).days)).toEqual([]);
   await page.locator("#sheetClose").click();
-  await expect(page.locator("#comingList .alm-row")).toHaveCount(4);
-  await page.locator("#comingMore button").click();
-  await expect(page.locator("#comingList .alm-row")).toHaveCount(8);
-  await page.locator("#comingMore button").click();
-  await expect(page.locator("#comingList .alm-row")).toHaveCount(4);
-  await expect(page.locator("#comingMore button")).toBeFocused();
+  await page.locator(".pause-other").click();
+  await expect(page.locator("#bMax")).toHaveValue("4");
 });
 
-test("the vacation opportunity opens the right year and works when all of this year is over", async ({ page }) => {
+test("home rolls over to next year's future breaks", async ({ page }) => {
   await open(page);
   await page.clock.setFixedTime(new Date("2027-12-31T10:00:00+01:00"));
   await page.reload();
-  await page.locator(".opportunity a").click();
-  await expect(page.locator("#v-planlegg")).toBeVisible();
+  await page.locator(".pause-other").click();
   await expect(page.locator("#bYear")).toHaveValue("2028");
-  await expect(page.locator("#bMax")).toHaveValue("1");
   await expect(page.locator(".plan").first()).toBeVisible();
 });
 
@@ -272,7 +266,7 @@ test.describe("installation screenshots", () => {
   for (const view of ["idag", "kalender", "planlegg"]) {
     test("capture " + view, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+      await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
       await open(page, view);
       await page.evaluate(async () => { await document.fonts.ready; });
       await expect(page.locator("#openSettings")).toBeInViewport();
