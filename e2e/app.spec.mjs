@@ -199,3 +199,81 @@ test("rows tell screen readers the date and when it is", async ({ page }) => {
   await expect(page.locator("#peopleSoonList .alm-row").first()).toHaveAttribute("aria-label", /Kari Nordmann, bursdag 3\. oktober · fyller 38, lørdag, om 6 dager/);
   await expect(page.locator("#comingList .alm-row").first()).toHaveAttribute("aria-label", /Julaften, torsdag 24\. desember, ikke rød dag, om 88 dager/);
 });
+
+test("today has a labelled holiday, day details and a compact expandable agenda", async ({ page }) => {
+  await open(page);
+  await expect(page.locator(".leaf-caption")).toContainText("Neste helligdag");
+  await page.locator(".leaf-action").click();
+  await expect(page.locator("#sheetTitle")).toContainText("25. desember 2026");
+  await page.locator("#sheetClose").click();
+  await expect(page.locator("#comingList .alm-row")).toHaveCount(4);
+  await page.locator("#comingMore button").click();
+  await expect(page.locator("#comingList .alm-row")).toHaveCount(8);
+  await page.locator("#comingMore button").click();
+  await expect(page.locator("#comingList .alm-row")).toHaveCount(4);
+  await expect(page.locator("#comingMore button")).toBeFocused();
+});
+
+test("the vacation opportunity opens the right year and works when all of this year is over", async ({ page }) => {
+  await open(page);
+  await page.clock.setFixedTime(new Date("2027-12-31T10:00:00+01:00"));
+  await page.reload();
+  await page.locator(".opportunity a").click();
+  await expect(page.locator("#v-planlegg")).toBeVisible();
+  await expect(page.locator("#bYear")).toHaveValue("2028");
+  await expect(page.locator("#bMax")).toHaveValue("1");
+  await expect(page.locator(".plan").first()).toBeVisible();
+});
+
+test("vacation plans persist in calendar and cannot exceed the budget", async ({ page }) => {
+  await open(page, "planlegg");
+  await page.locator("#bTotal").fill("0");
+  await page.locator("#bTotal").blur();
+  await expect(page.locator(".plan-save").first()).toBeDisabled();
+  await expect(page.locator(".plan-warning").first()).toContainText("flere feriedager");
+  await page.locator("#bTotal").fill("1");
+  await page.locator("#bTotal").blur();
+  await page.locator(".plan-save").first().click();
+  await expect(page.locator("#budgetMeter")).toHaveAttribute("value", "1");
+  await page.locator("#tab-kalender").click();
+  await page.locator("#calNext").click({ clickCount: 3, delay: 250 });
+  await expect(page.locator("#calTitle")).toContainText("Desember");
+  const day = page.locator(".cell.is-vacation").first();
+  await expect(day).toHaveAttribute("aria-label", /24\. desember 2026, Julaften, planlagt ferie/);
+  await day.click();
+  await expect(page.locator("#sheetBody")).toContainText("Du har planlagt ferie denne dagen.");
+  await page.locator("#sheetClose").click();
+  await page.reload();
+  // The month cursor resets on reload. The annual plan remains saved.
+  await page.locator("#calMode [data-mode=year]").click();
+  await expect(page.locator(".mini-grid .vacation", { hasText: /^24$/ })).toHaveCount(1);
+  await page.locator("#tab-planlegg").click();
+  await page.locator(".plan-save.is-saved").first().click();
+  await page.locator("#tab-kalender").click();
+  await expect(page.locator(".mini-grid .vacation")).toHaveCount(0);
+});
+
+test("reduced motion disables page and sheet movement", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await open(page);
+  await page.locator("#tab-kalender").click();
+  await page.locator(".cell").first().click();
+  const motion = await page.evaluate(() => ({
+    page: getComputedStyle(document.querySelector(".view.active")).animationName,
+    sheet: getComputedStyle(document.querySelector("#sheet")).transitionDuration
+  }));
+  expect(motion.page).toBe("none");
+  expect(motion.sheet).toBe("0s");
+});
+
+test("capture current installation screenshots", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+  await open(page);
+  await page.clock.setFixedTime(new Date("2026-10-09T12:00:00+02:00"));
+  for (const view of ["idag", "kalender", "planlegg"]) {
+    await page.goto("/#" + view);
+    await expect(page.locator("#v-" + view)).toBeVisible();
+    await page.screenshot({ path: "screenshots/" + view + ".png" });
+  }
+});

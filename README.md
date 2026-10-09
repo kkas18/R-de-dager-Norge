@@ -5,17 +5,20 @@ byggesteg og uten eksterne kall. Den virker uten nett.
 
 Designet er en lommealmanakk: papir, blekk og én rødfarge. Innholdet står i
 tabeller og setninger i stedet for kort og fliser, og rødt betyr alltid en rød
-dag. Bakgrunnen for utformingen står i `docs/REVISJON-2.md`.
+dag. Versjon 4 foredler almanakken med tydeligere hierarki, en kortere forside
+og ferieplaner i kalenderen. Vurderingen og endringene står i `docs/REVISJON-3.md`.
 
 ## Sidene
 
-- **I dag** viser neste helligdag som et ark fra en rivblokk, med nedtellingen
-  som en setning. Under står neste langhelg og neste inneklemte dag, denne
-  uken, en almanakktabell over det som kommer, og dine neste dager.
+- **I dag** viser et tydelig merket kalenderblad for neste helligdag, med dato,
+  nedtelling og «Se dagen». Ett ferietips tar deg til riktig år i planleggeren.
+  Denne uken og dine neste dager følger under. Kommende hellig- og merkedager
+  viser fire rader først, med «Vis alle» for resten.
 - **Kalender** har månedsvisning med ukenummer, der røde tall er røde dager og
   en strek under tallet markerer navngitte dager. Årsvisningen er en trykt
   årskalender med alle tolv måneder. Sveip sidelengs for å bytte måned, og
   trykk på månedsnavnet for å hoppe.
+  Planlagte feriedager har en stiplet ramme i både måneds- og årsvisning.
 - **Personer** er en bursdagsalmanakk: alle gruppert på måneden for neste dag,
   deretter de uten dato og de som er passert. Søket vises fra seks personer. «Sett dato» går gjennom alle uten dato, én om gangen.
   Langt trykk eller «Velg» gir flervalg. Sletting kan angres, i stedet for et
@@ -25,6 +28,8 @@ dag. Bakgrunnen for utformingen står i `docs/REVISJON-2.md`.
   ikke. Hvert forslag har en ukestripe, og du kan planlegge perioder mot dine
   egne feriedager og legge dem i kalenderen. Her regner du også ut virkedager
   mellom to datoer.
+  En budsjettlinje viser hvor mye du har brukt. Forslag som krever flere
+  feriedager enn du har igjen, forklarer hvor mange som mangler.
 - **Innstillinger** (knappen øverst til høyre):
   - tema (som telefonen, lyst eller mørkt)
   - hva nedtellingen viser
@@ -40,6 +45,7 @@ dag. Bakgrunnen for utformingen står i `docs/REVISJON-2.md`.
 | `js/dates.js`, `js/holidays.js` | Rene dato- og helligdagsfunksjoner (testet) |
 | `js/people.js`, `js/reminders.js`, `js/ics.js` | Datamodell, varsler og kalenderfiler (testet) |
 | `js/store.js`, `js/kv.js` | Lagring i localStorage, speilet til IndexedDB for service workeren |
+| `js/planning.js` | Validering av ferieplaner og telling uten dobbelttelling |
 | `js/dom.js`, `js/ui.js` | `h()`-hjelper uten innerHTML, bunnark og toast |
 | `js/views/*.js` | De fire sidene og innstillingene |
 | `js/version.js` | Versjonsnummeret, som bare står her |
@@ -110,4 +116,5 @@ det virker appen fortsatt, men ikke uten nett.
 Appen dekker helligdagsloven og lov om 1. og 17. mai. Den tar ikke hensyn til
 turnus, lokale avtaler eller tariffavtaler om fri på jul- og nyttårsaften.
 
-Revisjonene finner du i `docs/REVISJON.md` (versjon 2) og `docs/REVISJON-2.md` (versjon 3).
+Revisjonene finner du i `docs/REVISJON.md` (versjon 2), `docs/REVISJON-2.md` (versjon 3)
+og `docs/REVISJON-3.md` (versjon 4).

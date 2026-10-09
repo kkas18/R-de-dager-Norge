@@ -40,22 +40,23 @@
     <h2 class="visually-hidden">I dag</h2>
     <article class="leaf" id="leaf" aria-live="polite"></article>
     <div id="tips"></div>
+    <p class="week-label" id="weekLabel"></p>
     <div class="week" id="week" role="group" aria-label="Denne uken"></div>
-
-    <section class="section" aria-labelledby="comingHead">
-      <div class="section-head"><h3 id="comingHead">Kommende</h3><span class="kicker" id="comingKicker"></span></div>
-      <div id="comingList"></div>
-    </section>
 
     <section class="section" id="peopleSoon" aria-labelledby="soonHead" hidden>
       <div class="section-head"><h3 id="soonHead">Dine neste dager</h3><a class="link" href="#personer">Alle</a></div>
       <div id="peopleSoonList"></div>
     </section>
+    <section class="section" aria-labelledby="comingHead">
+      <div class="section-head"><h3 id="comingHead">Kommende</h3><span class="kicker" id="comingKicker"></span></div>
+      <div id="comingList"></div>
+      <div id="comingMore"></div>
+    </section>
   </section>
 
   <!-- KALENDER -->
   <section class="view" id="v-kalender" role="tabpanel" aria-labelledby="tab-kalender" tabindex="-1">
-    <h2 class="visually-hidden">Kalender</h2>
+    <h2 class="page-title view-title">Kalender</h2>
     <div class="tabs" id="calMode" role="group" aria-label="Visning">
       <button type="button" data-mode="month" aria-pressed="true">Måned</button>
       <button type="button" data-mode="year" aria-pressed="false">År</button>
@@ -68,7 +69,7 @@
         <button class="icon-btn" id="calNext" type="button" aria-label="Neste måned"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <div class="grid" id="grid" aria-live="polite"></div>
-      <p class="legend" aria-hidden="true"><span><i class="k-mark"></i>Helligdag</span><span><i class="k-mark grey"></i>Merkedag</span><span><i class="k-own"></i>Dine dager</span><span><i class="k-ring"></i>I dag</span></p>
+      <p class="legend"><span><i class="k-mark" aria-hidden="true"></i>Helligdag</span><span><i class="k-mark grey" aria-hidden="true"></i>Merkedag</span><span><i class="k-own" aria-hidden="true"></i>Dine dager</span><span><i class="k-ring" aria-hidden="true"></i>I dag</span><span><i class="k-vacation" aria-hidden="true"></i>Planlagt ferie</span></p>
       <section class="section" aria-labelledby="monthListHead">
         <div class="section-head"><h3 id="monthListHead">Merkedager</h3></div>
         <div id="monthList"></div>
@@ -107,7 +108,8 @@
 
   <!-- PLANLEGG -->
   <section class="view" id="v-planlegg" role="tabpanel" aria-labelledby="tab-planlegg" tabindex="-1">
-    <h2 class="visually-hidden">Planlegg</h2>
+    <h2 class="page-title view-title">Få mer ut av fridagene.</h2>
+    <p class="view-intro">Finn lange pauser med færre feriedager.</p>
     <div class="tabs" id="planMode" role="group" aria-label="Verktøy">
       <button type="button" data-mode="bridges" aria-pressed="true">Inneklemte dager</button>
       <button type="button" data-mode="range" aria-pressed="false">Virkedager</button>
@@ -125,8 +127,9 @@
         Du har <label class="visually-hidden" for="bTotal">Feriedager du har</label><input class="inline-input" id="bTotal" type="number" inputmode="numeric" min="0" max="99">
         feriedager. <span id="budgetText"></span>
       </p>
+      <progress class="budget-meter" id="budgetMeter" value="0" max="25" aria-label="Planlagte feriedager av feriebudsjettet"></progress>
       <p class="small muted" id="plannedDays" hidden></p>
-      <p class="legend" aria-hidden="true"><span><i class="k-mark"></i>Rødt tall: helligdag</span><span><i class="k-ring"></i>Ring: du tar fri</span></p>
+      <p class="legend"><span><i class="k-mark" aria-hidden="true"></i>Rødt tall: helligdag</span><span><i class="k-ring" aria-hidden="true"></i>Ring: du tar fri</span></p>
       <div id="planList"></div>
     </div>
 

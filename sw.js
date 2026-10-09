@@ -28,6 +28,7 @@ const SHELL = [
   "js/ics.js",
   "js/kv.js",
   "js/people.js",
+  "js/planning.js",
   "js/reminders.js",
   "js/store.js",
   "js/ui.js",

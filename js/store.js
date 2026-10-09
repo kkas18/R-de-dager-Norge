@@ -3,6 +3,7 @@
 
 import { normalizePerson } from "./people.js";
 import { kvSet } from "./kv.js";
+import { normalizePlan, planKey } from "./planning.js";
 
 const PEOPLE_KEY = "rd:events";
 
@@ -57,9 +58,24 @@ export function removePeople(ids) {
 
 export function onPeopleChange(fn) { listeners.add(fn); }
 
+const planListeners = new Set();
+export const loadPlan = year => normalizePlan(prefs.getJson(planKey(year), {}));
+export function savePlan(year, plan) {
+  prefs.setJson(planKey(year), normalizePlan(plan));
+  planListeners.forEach(fn => fn());
+}
+export function onPlanChange(fn) { planListeners.add(fn); }
+
+// Earlier versions could store a New Year period under the preceding year.
+// Reading neighbouring years preserves those days in the calendar too.
+export function plannedDates(year) {
+  return new Set([year - 1, year, year + 1].flatMap(y => loadPlan(y).days));
+}
+
 // Another window or the installed app changed the list: drop the cache and re-render,
 // so this window never writes a stale copy back over it.
 addEventListener("storage", e => {
+  if (e.key === null || e.key?.startsWith("rd:plan:")) planListeners.forEach(fn => fn());
   if (e.key !== PEOPLE_KEY && e.key !== null) return;
   cache = null;
   listeners.forEach(fn => fn());

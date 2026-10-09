@@ -3,11 +3,11 @@
 import { h, mount, $, haptic, reducedMotion } from "../dom.js";
 import {
   MONTHS, WEEKDAYS, WEEKDAYS_SHORT, WEEK_ORDER, addDays, capitalize, date, daysInMonth, formatFull, formatDayMonth,
-  isoWeek, sameDay
+  isoWeek, sameDay, isoDate
 } from "../dates.js";
 import { holidaysOf, holidayOn, isRedDay, yearSummary } from "../holidays.js";
 import { occursOn, hasDate, occurrenceIn } from "../people.js";
-import { loadPeople } from "../store.js";
+import { loadPeople, plannedDates } from "../store.js";
 import { openSheet, closeSheet } from "../ui.js";
 import { almanac, holidayItem, holidayRow, personRow, showDay, today, openPerson } from "./shared.js";
 
@@ -89,6 +89,7 @@ function monthGrid(y, m, t) {
   const start = addDays(first, -lead);
   const weeks = Math.ceil((lead + daysInMonth(y, m)) / 7);
   const people = loadPeople();
+  const vacation = plannedDates(y);
 
   const cells = [h("span", { class: "hd hd-wk", "aria-hidden": "true" })];
   for (const wd of WEEK_ORDER) cells.push(h("span", { class: "hd", "aria-hidden": "true" }, WEEKDAYS_SHORT[wd]));
@@ -100,11 +101,12 @@ function monthGrid(y, m, t) {
       const dt = addDays(start, w * 7 + i);
       const hd = holidayOn(dt);
       const own = people.some(p => occursOn(p, dt));
-      const label = capitalize(formatFull(dt)) + (hd ? ", " + hd.name : "") + (own ? ", en av dine dager" : "");
+      const planned = vacation.has(isoDate(dt));
+      const label = capitalize(formatFull(dt)) + (hd ? ", " + hd.name : "") + (own ? ", en av dine dager" : "") + (planned ? ", planlagt ferie" : "");
       cells.push(h("button", {
         type: "button",
         class: "cell" + (dt.getMonth() !== m ? " is-out" : "") + (isRedDay(dt) ? " is-red" : "") +
-          (sameDay(dt, t) ? " is-today" : "") + (selected && sameDay(selected, dt) ? " is-selected" : ""),
+          (sameDay(dt, t) ? " is-today" : "") + (selected && sameDay(selected, dt) ? " is-selected" : "") + (planned ? " is-vacation" : ""),
         "aria-label": label,
         "aria-current": sameDay(dt, t) ? "date" : null,
         onclick: () => { selected = dt; renderCalendar(); showDay(dt); }
@@ -123,7 +125,8 @@ function renderMonth(dir) {
   $("#calTitle").setAttribute("aria-label", capitalize(MONTHS[m]) + " " + y + ". Velg måned og år");
   mount($("#grid"), monthGrid(y, m, t));
   if (dir && !reducedMotion()) {
-    $("#grid").animate([{ opacity: .3 }, { opacity: 1 }], { duration: 180, easing: "ease-out" });
+    $("#grid").animate([{ opacity: .3, transform: "translateX(" + (dir > 0 ? 10 : -10) + "px)" },
+      { opacity: 1, transform: "translateX(0)" }], { duration: 220, easing: "cubic-bezier(.22,.61,.36,1)" });
   }
 
   const items = holidaysOf(y).filter(hd => hd.d.getMonth() === m).map(hd => holidayItem(hd, t))
@@ -141,6 +144,7 @@ function renderMonth(dir) {
 
 function renderYear() {
   const y = cursor.getFullYear(), t = today();
+  const vacation = plannedDates(y);
   mount($("#yearTitle"), String(y));
   const months = MONTHS.map((name, m) => {
     const first = date(y, m, 1);
@@ -149,7 +153,8 @@ function renderYear() {
     for (let i = 0; i < lead; i++) nums.push(h("i"));
     for (let d = 1; d <= daysInMonth(y, m); d++) {
       const dt = date(y, m, d);
-      nums.push(h("i", { class: (isRedDay(dt) ? "red" : "") + (sameDay(dt, t) ? " today" : "") }, d));
+      nums.push(h("i", { class: (isRedDay(dt) ? "red" : "") + (sameDay(dt, t) ? " today" : "") +
+        (vacation.has(isoDate(dt)) ? " vacation" : "") }, d));
     }
     const reds = holidaysOf(y).filter(hd => hd.red && hd.d.getMonth() === m).length;
     return h("button", {

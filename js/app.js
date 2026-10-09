@@ -2,7 +2,7 @@
 
 import { $, reducedMotion } from "./dom.js";
 import { WEEKDAYS, MONTHS_SHORT, isoWeek, startOfDay } from "./dates.js";
-import { prefs, onPeopleChange, mirrorPeople } from "./store.js";
+import { prefs, onPeopleChange, onPlanChange, mirrorPeople } from "./store.js";
 import { sheetIsOpen, toast } from "./ui.js";
 import { renderToday } from "./views/today.js";
 import { initCalendar, renderCalendar, updateTodayButton } from "./views/calendar.js";
@@ -154,6 +154,7 @@ function initServiceWorker() {
   initTabs();
   initSwipe();
   onPeopleChange(renderAll);
+  onPlanChange(() => { renderToday(); renderCalendar(); });
 
   renderAll();
   const first = viewFromHash();
