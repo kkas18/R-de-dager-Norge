@@ -4,20 +4,25 @@ import { h, mount, $, haptic, downloadFile } from "../dom.js";
 import { WEEKDAY_LETTERS, addDays, formatRange, formatCompact, isoDate, parseIsoDate, plural, capitalize, WEEKDAYS } from "../dates.js";
 import { bridges, rangeStats, MAX_RANGE_DAYS } from "../holidays.js";
 import { periodCalendar } from "../ics.js";
-import { prefs } from "../store.js";
+import { prefs, loadPlan, savePlan } from "../store.js";
+import { planBudget, togglePeriod } from "../planning.js";
 import { toast } from "../ui.js";
 import { almanac, holidayItem, today } from "./shared.js";
 
-const planKey = y => "rd:plan:" + y;
-// The plan is the set of vacation days taken, not suggestion ids: suggestions change
-// with the per-period limit, days do not, so nothing is hidden or counted twice.
-const loadPlan = y => {
-  const v = prefs.getJson(planKey(y), {});
-  const days = (Array.isArray(v.days) ? v.days : []).filter(d => typeof d === "string" && parseIsoDate(d));
-  return { total: Number.isInteger(v.total) ? v.total : 25, days: [...new Set(days)].sort() };
-};
 const isPlanned = (plan, period) => period.take.every(d => plan.days.includes(isoDate(d)));
-const savePlan = (y, plan) => prefs.setJson(planKey(y), plan);
+
+export function openPlanner(year, max = 1) {
+  $("#bYear").value = year;
+  $("#bMax").value = max;
+  prefs.set("rd:maxPerPeriod", max);
+  for (const btn of document.querySelectorAll("#planMode button")) {
+    btn.setAttribute("aria-pressed", String(btn.dataset.mode === "bridges"));
+  }
+  $("#planBridges").hidden = false;
+  $("#planRange").hidden = true;
+  syncBudgetInput();
+  renderPlan();
+}
 
 export function initPlan() {
   const t = today();
@@ -25,9 +30,14 @@ export function initPlan() {
   $("#bYear").addEventListener("change", () => { syncBudgetInput(); renderPlan(); });
   $("#bMax").value = prefs.get("rd:maxPerPeriod", "3");
   $("#bMax").addEventListener("change", () => { prefs.set("rd:maxPerPeriod", $("#bMax").value); renderPlan(); });
-  $("#bTotal").addEventListener("input", () => {
+  $("#bTotal").addEventListener("change", () => {
     const y = Number($("#bYear").value), plan = loadPlan(y), n = Number($("#bTotal").value);
-    if (Number.isInteger(n) && n >= 0 && n <= 99) { plan.total = n; savePlan(y, plan); renderBudget(y); }
+    if ($("#bTotal").value !== "" && Number.isInteger(n) && n >= 0 && n <= 99) {
+      plan.total = n; savePlan(y, plan); renderBridges();
+    } else {
+      syncBudgetInput();
+      toast("Velg mellom 0 og 99 feriedager.");
+    }
   });
   syncBudgetInput();
 
@@ -52,11 +62,14 @@ function syncBudgetInput() {
 
 function renderBudget(y) {
   const plan = loadPlan(y);
-  const used = plan.days.length;
-  const left = plan.total - used;
+  const { used, left } = planBudget(plan);
   $("#budgetText").textContent = used === 0
-    ? "Ingen er planlagt ennå."
+    ? "Ingen er planlagt ennå. " + left + " igjen."
     : used + " er planlagt, " + (left >= 0 ? left + " igjen." : -left + " for mange.");
+  $("#budget").classList.toggle("is-over", left < 0);
+  $("#budgetMeter").max = Math.max(1, plan.total);
+  $("#budgetMeter").value = Math.min(used, Math.max(1, plan.total));
+  $("#budgetMeter").setAttribute("aria-label", used + " av " + plan.total + " feriedager planlagt");
   mount($("#plannedDays"), used ? [
     "Planlagt: " + plan.days.map(d => formatCompact(parseIsoDate(d))).join(", ") + ". ",
     h("button", {
@@ -89,24 +102,32 @@ function renderBridges() {
 
   mount($("#planList"), list.map(p => {
     const planned = isPlanned(plan, p);
+    const { left, added } = planBudget(plan, p.take);
+    const enough = planned || added <= left;
     const label = capitalize(formatRange(p.from, p.to)) + ": " + p.total + " dager fri for " + p.vacation + " " +
       plural(p.vacation, "feriedag", "feriedager") + ". Ta fri " + takeText(p);
-    return h("article", { class: "plan" + (planned ? " is-planned" : ""), "aria-label": label },
+    return h("article", { class: "plan" + (planned ? " is-planned" : ""), dataset: { period: p.id }, "aria-label": label },
       h("div", { class: "plan-top" },
         h("p", { class: "plan-gain" }, h("span", { class: "num" }, p.total), "dager fri"),
         h("p", { class: "plan-cost" }, "for " + p.vacation + " " + plural(p.vacation, "feriedag", "feriedager"))),
-      h("p", { class: "plan-range" }, capitalize(formatRange(p.from, p.to)) + " · ta fri " + takeText(p)),
+      h("p", { class: "plan-range" }, capitalize(formatRange(p.from, p.to))),
+      h("p", { class: "plan-take" }, "Ta fri " + takeText(p) + "."),
       strip(p),
+      enough ? null : h("p", { class: "plan-warning", id: "cost-" + p.id },
+        "Du trenger " + (added - left) + " flere feriedager i budsjettet."),
       h("div", { class: "link-row" },
         h("button", {
-          class: "link" + (planned ? " red" : ""), type: "button", "aria-pressed": String(planned),
+          class: "plan-save" + (planned ? " is-saved" : ""), type: "button", "aria-pressed": String(planned),
+          disabled: !enough, "aria-describedby": enough ? null : "cost-" + p.id,
           onclick: () => {
             const cur = loadPlan(y);
-            const take = p.take.map(isoDate);
-            cur.days = planned ? cur.days.filter(d => !take.includes(d)) : [...new Set(cur.days.concat(take))].sort();
-            savePlan(y, cur);
+            if (!isPlanned(cur, p) && planBudget(cur, p.take).added > planBudget(cur).left) return;
+            savePlan(y, togglePeriod(cur, p.take));
             haptic(8);
             renderBridges();
+            const button = $('[data-period="' + p.id + '"] .plan-save');
+            (button.disabled ? $("#bTotal") : button).focus({ preventScroll: true });
+            toast(planned ? "Perioden er fjernet fra ferieplanen." : "Planlagt. Feriedagene vises nå i kalenderen.");
           }
         }, planned ? "Planlagt ✓" : "Planlegg"),
         h("button", {

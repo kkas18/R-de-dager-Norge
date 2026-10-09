@@ -95,3 +95,11 @@ test("long weekends know their season", () => {
   assert.equal(nextLongWeekend(date(2026, 8, 27)).holiday.season, "jula");
   assert.equal(nextLongWeekend(date(2027, 2, 1)).holiday.season, "påsken");
 });
+
+test("bridge vacation days belong to the budget year even at New Year", () => {
+  for (const y of [2026, 2027, 2028]) {
+    for (const period of bridges(y, 8)) {
+      assert.ok(period.take.every(d => d.getFullYear() === y));
+    }
+  }
+});

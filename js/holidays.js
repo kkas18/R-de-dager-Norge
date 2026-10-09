@@ -174,6 +174,8 @@ export function bridges(y, maxVacation, notBefore = null) {
     if (days[i].free || days[i].d.getFullYear() !== y) continue;
     if (notBefore && days[i].d < notBefore) continue;
     for (let j = i; j < Math.min(days.length, i + 40); j++) {
+      // Vacation budgets belong to one year; free days may still extend into January.
+      if (days[j].d.getFullYear() !== y) break;
       if (days[j].free) continue;
       const vacation = prefix[j + 1] - prefix[i];
       if (vacation > maxVacation) break;

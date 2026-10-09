@@ -3,11 +3,11 @@
 import { h } from "../dom.js";
 import { openSheet } from "../ui.js";
 import {
-  MONTHS, WEEKDAYS, capitalize, daysBetween, formatDayMonth, isoWeek, relativeDays, startOfDay, plural
+  MONTHS, WEEKDAYS, capitalize, daysBetween, formatDayMonth, isoWeek, relativeDays, startOfDay, plural, isoDate
 } from "../dates.js";
 import { holidayOn, isRedDay, upcomingHolidays, KIND_LABEL } from "../holidays.js";
 import { occursOn, describe, nextOccurrence, hasDate } from "../people.js";
-import { loadPeople } from "../store.js";
+import { loadPeople, plannedDates } from "../store.js";
 
 export const today = () => startOfDay();
 
@@ -96,6 +96,10 @@ export function showDay(dt) {
   if (hd) body.push(h("p", null, h("strong", null, hd.name + ". "), hd.note));
   else if (dt.getDay() === 0) body.push(h("p", null, "En vanlig søndag. Alle søndager er røde dager."));
   else if (dt.getDay() === 6) body.push(h("p", null, "Fri for de fleste, men ikke en rød dag."));
+
+  if (plannedDates(dt.getFullYear()).has(isoDate(dt))) {
+    body.push(h("p", { class: "vacation-note" }, "Du har planlagt ferie denne dagen."));
+  }
 
   const mine = loadPeople().filter(p => occursOn(p, dt));
   if (mine.length) {
