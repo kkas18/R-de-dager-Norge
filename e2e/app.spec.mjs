@@ -33,6 +33,7 @@ test.describe("every view, both themes, two widths", () => {
           await page.goto("/#" + view);
           await expect(page.locator("#v-" + view)).toBeVisible();
           await page.waitForFunction(() => document.getAnimations().every(a => a.playState !== "running"));
+          await expect(page.locator("#openSettings")).toBeInViewport();
           const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
           expect(overflow, `horizontal overflow on ${view}`).toBeLessThanOrEqual(0);
 
@@ -266,14 +267,16 @@ test("reduced motion disables page and sheet movement", async ({ page }) => {
   expect(motion.sheet).toBe("0s");
 });
 
-test("capture current installation screenshots", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
-  await open(page);
-  await page.clock.setFixedTime(new Date("2026-10-09T12:00:00+02:00"));
+test.describe("installation screenshots", () => {
+  test.use({ deviceScaleFactor: 2 });
   for (const view of ["idag", "kalender", "planlegg"]) {
-    await page.goto("/#" + view);
-    await expect(page.locator("#v-" + view)).toBeVisible();
-    await page.screenshot({ path: "screenshots/" + view + ".png" });
+    test("capture " + view, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+      await open(page, view);
+      await page.evaluate(async () => { await document.fonts.ready; });
+      await expect(page.locator("#openSettings")).toBeInViewport();
+      await page.screenshot({ path: "screenshots/" + view + ".png" });
+    });
   }
 });

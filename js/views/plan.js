@@ -64,7 +64,7 @@ function renderBudget(y) {
   const plan = loadPlan(y);
   const { used, left } = planBudget(plan);
   $("#budgetText").textContent = used === 0
-    ? "Ingen er planlagt ennå. " + left + " igjen."
+    ? "Ingen planlagt."
     : used + " er planlagt, " + (left >= 0 ? left + " igjen." : -left + " for mange.");
   $("#budget").classList.toggle("is-over", left < 0);
   $("#budgetMeter").max = Math.max(1, plan.total);
